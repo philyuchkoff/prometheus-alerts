@@ -100,7 +100,7 @@
     
 -   #### MySQL slow queries
     
-##### MySQL server is having some slow queries.[copy]
+##### MySQL server is having some slow queries.
     
 ```yaml
       - alert: MysqlSlowQueries
