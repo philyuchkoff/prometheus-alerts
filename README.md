@@ -6,7 +6,7 @@
 
  - [MySQL](https://github.com/philyuchkoff/prometheus-alerts/blob/master/databases/mysql.md)
  - [PostgreSQL](https://github.com/philyuchkoff/prometheus-alerts/blob/master/databases/postgresql.md)
- - PGBouncer
+ - [PGBouncer](https://github.com/philyuchkoff/prometheus-alerts/blob/master/databases/pgbouncer.md)
  - Redis
  - MongoDB
  - Elasticsearch
