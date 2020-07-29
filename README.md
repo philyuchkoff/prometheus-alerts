@@ -9,11 +9,12 @@
  - [PGBouncer](https://github.com/philyuchkoff/prometheus-alerts/blob/master/databases/pgbouncer.md)
  - [Redis](https://github.com/philyuchkoff/prometheus-alerts/blob/master/databases/redis.md)
  - [MongoDB](https://github.com/philyuchkoff/prometheus-alerts/blob/master/databases/mongodb.md)
- - Elasticsearch
- - Cassandra
+
 
 ### Brokers
 
  - RabbitMQ
  - Zookeeper
  - Apache Kafka
+ - [Elasticsearch](https://github.com/philyuchkoff/prometheus-alerts/blob/master/brokers/elasticsearch.md)
+ - Cassandra
