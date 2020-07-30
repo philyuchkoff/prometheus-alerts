@@ -14,7 +14,7 @@
 
 ### Brokers
 
- - RabbitMQ
+ - [RabbitMQ](https://github.com/philyuchkoff/prometheus-alerts/blob/master/brokers/rabbitmq.md)
  - Zookeeper
  - Apache Kafka
  - [Elasticsearch](https://github.com/philyuchkoff/prometheus-alerts/blob/master/brokers/elasticsearch.md)
