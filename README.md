@@ -1,6 +1,8 @@
 
 # Prometheus Alerts
-## Some useful Prometheus alerts
+Some useful Prometheus alerts
+
+### [Prometheus documentation](https://prometheus.io/docs/introduction/overview/)
 
 ### Databases
 
