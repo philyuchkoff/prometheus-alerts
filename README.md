@@ -2,7 +2,8 @@
 # Prometheus Alerts
 Some useful Prometheus alerts
 
-### [Prometheus documentation](https://prometheus.io/docs/introduction/overview/)
+ - [Exporters which I use always](https://github.com/philyuchkoff/prometheus-alerts/blob/master/exporters.md)
+ - [Prometheus documentation](https://prometheus.io/docs/introduction/overview/)
 
 ### Databases
 
@@ -27,5 +28,8 @@ Some useful Prometheus alerts
  - HAProxy
  - [Traefik](https://github.com/philyuchkoff/prometheus-alerts/blob/master/proxy/traefik.md)
  
- ### [Exporters which I use always](https://github.com/philyuchkoff/prometheus-alerts/blob/master/exporters.md)
+### Some
+
+ - JVM
+ - MinIO
  
