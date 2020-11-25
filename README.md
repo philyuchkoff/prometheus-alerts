@@ -24,7 +24,7 @@ Some useful Prometheus alerts
  
  ### Proxies and load balancers
 
- - Nginx
+ - [Nginx](https://github.com/philyuchkoff/prometheus-alerts/blob/master/proxy/nginx.md)
  - HAProxy
  - [Traefik](https://github.com/philyuchkoff/prometheus-alerts/blob/master/proxy/traefik.md)
  
