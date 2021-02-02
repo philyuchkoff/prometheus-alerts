@@ -1,3 +1,5 @@
+### [Java Client](https://github.com/prometheus/client_java)
+
 ````
 - name: JVM
   rules:
