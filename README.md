@@ -1,9 +1,12 @@
 
-# Prometheus Alerts
-Some useful Prometheus alerts
-
  - [Exporters which I use always](https://github.com/philyuchkoff/prometheus-alerts/blob/master/exporters.md)
  - [Prometheus documentation](https://prometheus.io/docs/introduction/overview/)
+
+### Prometheus
+[Prometheus self-monitoring](https://github.com/philyuchkoff/prometheus-alerts/blob/master/prometheus.md)
+
+### Docker Ccontainers
+[Docker containers](https://github.com/philyuchkoff/prometheus-alerts/blob/master/docker-containers.md)
 
 ### Databases
 
