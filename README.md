@@ -33,7 +33,7 @@
  
 ### Runtimes
 - PHP-FPM
-- JVM
+- [JVM](https://github.com/philyuchkoff/prometheus-alerts/blob/master/runtimes/jvm.md)
 - Sidekiq
 
 ### Orchestrators
