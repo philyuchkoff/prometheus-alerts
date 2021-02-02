@@ -28,7 +28,7 @@
  ### Proxies and load balancers
 
  - [Nginx](https://github.com/philyuchkoff/prometheus-alerts/blob/master/proxy/nginx.md)
- - HAProxy
+ - [HAProxy v.2](https://github.com/philyuchkoff/prometheus-alerts/blob/master/proxy/haproxy.md)
  - [Traefik](https://github.com/philyuchkoff/prometheus-alerts/blob/master/proxy/traefik.md)
  
 ### Some
