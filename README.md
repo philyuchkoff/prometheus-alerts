@@ -31,8 +31,29 @@
  - [HAProxy v.2](https://github.com/philyuchkoff/prometheus-alerts/blob/master/proxy/haproxy.md)
  - [Traefik](https://github.com/philyuchkoff/prometheus-alerts/blob/master/proxy/traefik.md)
  
+### Runtimes
+- PHP-FPM
+- JVM
+- Sidekiq
+
+### Orchestrators
+- Kubernetes
+- Nomad
+- Consul
+- Etcd
+- Linkerd
+- Istio
+
+### Network and storage
+- Ceph
+- ZFS
+- OpenEBS
+- MinIO
+- Juniper
+- CoreDNS
+ 
 ### Some
 
- - JVM
- - MinIO
+
+ - Thanos
  - [Node Exporter](https://github.com/philyuchkoff/prometheus-alerts/blob/master/some/node-exporter.md)
