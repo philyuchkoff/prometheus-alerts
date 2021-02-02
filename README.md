@@ -42,7 +42,7 @@
 - Consul
 - Etcd
 - Linkerd
-- Istio
+- [Istio](https://github.com/philyuchkoff/prometheus-alerts/blob/master/orchestrators/istio.md)
 
 ### Network and storage
 - Ceph
