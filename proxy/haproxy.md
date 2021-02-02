@@ -1,4 +1,4 @@
-# HAProxy version > 2
+# [HAProxy Exporter version > 2](https://github.com/haproxy/haproxy/tree/master/contrib/prometheus-exporter)
 
 ````
 - name: HAProxy
