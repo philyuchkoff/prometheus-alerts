@@ -5,7 +5,7 @@
 ### Prometheus
 [Prometheus self-monitoring](https://github.com/philyuchkoff/prometheus-alerts/blob/master/prometheus.md)
 
-### Docker Ccontainers
+### Docker Containers
 [Docker containers](https://github.com/philyuchkoff/prometheus-alerts/blob/master/docker-containers.md)
 
 ### Databases
