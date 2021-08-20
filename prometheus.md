@@ -10,15 +10,6 @@
       summary: "Prometheus job missing (instance {{ $labels.instance }})"
       description: "A Prometheus job has disappeared\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
 
-  - alert: PrometheusTargetMissing
-    expr: up == 0
-    for: 0m
-    labels:
-      severity: critical
-    annotations:
-      summary: "Prometheus target missing (instance {{ $labels.instance }})"
-      description: "A Prometheus target has disappeared. An exporter might be crashed.\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
-
   - alert: PrometheusAllTargetsMissing
     expr: count by (job) (up) == 0
     for: 0m
@@ -28,14 +19,32 @@
       summary: "Prometheus all targets missing (instance {{ $labels.instance }})"
       description: "A Prometheus job does not have living target anymore.\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
 
+  - alert: PrometheusTargetMissing
+    expr: up == 0
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      summary: Prometheus target missing (instance {{ $labels.instance }})
+      description: "A Prometheus target has disappeared. An exporter might be crashed.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: PrometheusJobMissing
+    expr: absent(up{job="prometheus"})
+    for: 0m
+    labels:
+      severity: warning
+    annotations:
+      summary: Prometheus job missing (instance {{ $labels.instance }})
+      description: "A Prometheus job has disappeared\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
   - alert: PrometheusConfigurationReloadFailure
     expr: prometheus_config_last_reload_successful != 1
     for: 0m
     labels:
       severity: warning
     annotations:
-      summary: "Prometheus configuration reload failure (instance {{ $labels.instance }})"
-      description: "Prometheus configuration reload error\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
+      summary: Prometheus configuration reload failure (instance {{ $labels.instance }})
+      description: "Prometheus configuration reload error\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 
   - alert: PrometheusTooManyRestarts
     expr: changes(process_start_time_seconds{job=~"prometheus|pushgateway|alertmanager"}[15m]) > 2

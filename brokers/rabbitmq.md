@@ -1,6 +1,6 @@
 ## RabbitMQ
 
-### [RabbitMQ Exporter](https://github.com/kbudde/rabbitmq_exporter)
+### [RabbitMQ Exporter](https://github.com/rabbitmq/rabbitmq-prometheus)
 
 -   #### Rabbitmq down
     
@@ -16,8 +16,6 @@
           summary: "Rabbitmq down (instance {{ $labels.instance }})"
           description: "RabbitMQ node down\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
 ```
-    
-      
     
 -   #### Rabbitmq cluster down
     
@@ -68,8 +66,48 @@
           description: "Memory available for RabbmitMQ is low (< 10%)\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
 ```
     
-      
+-   #### RabbitMQ memory high
     
+##### A node use more than 90% of allocated RAM      
+```yaml
+  - alert: RabbitmqMemoryHigh
+    expr: rabbitmq_process_resident_memory_bytes / rabbitmq_resident_memory_limit_bytes * 100 > 90
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: Rabbitmq memory high (instance {{ $labels.instance }})
+      description: "A node use more than 90% of allocated RAM\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+```
+
+-   #### Rabbitmq file descriptors usage
+    
+##### A node use more than 90% of file descriptors      
+```yaml
+  - alert: RabbitmqFileDescriptorsUsage
+    expr: rabbitmq_process_open_fds / rabbitmq_process_max_fds * 100 > 90
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: Rabbitmq file descriptors usage (instance {{ $labels.instance }})
+      description: "A node use more than 90% of file descriptors\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+```
+
+-   #### RabbitMQ too many unack messages
+    
+##### Too many unacknowledged messages      
+```yaml
+  - alert: RabbitmqTooManyUnackMessages
+    expr: sum(rabbitmq_queue_messages_unacked) BY (queue) > 1000
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      summary: Rabbitmq too many unack messages (instance {{ $labels.instance }})
+      description: "Too many unacknowledged messages\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+```
+
 -   #### Rabbitmq too many connections
     
 ##### RabbitMQ instance has too many connections (> 1000)
@@ -84,7 +122,20 @@
           summary: "Rabbitmq too many connections (instance {{ $labels.instance }})"
           description: "RabbitMQ instance has too many connections (> 1000)\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
 ```
+ -   #### RabbitMQ no queue consumer
     
+##### A queue has less than 1 consumer
+    
+```yaml
+  - alert: RabbitmqNoQueueConsumer
+    expr: rabbitmq_queue_consumers < 1
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      summary: Rabbitmq no queue consumer (instance {{ $labels.instance }})
+      description: "A queue has less than 1 consumer\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+```   
       
     
 -   #### Rabbitmq dead letter queue filling up
