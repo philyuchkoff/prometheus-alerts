@@ -37,7 +37,7 @@
 - Sidekiq
 
 ### Orchestrators
-- Kubernetes
+- [Kubernetes](orchestrators/k8s.md)
 - Nomad
 - Consul
 - Etcd
