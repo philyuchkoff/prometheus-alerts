@@ -55,5 +55,8 @@
 ### Some
 
  - Thanos
+ - Loki
+ - Promtail
+ - Jenkins
  - [VMware](some/vmware.md)
  - [Node Exporter](https://github.com/philyuchkoff/prometheus-alerts/blob/master/some/node-exporter.md)
