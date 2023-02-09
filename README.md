@@ -48,7 +48,7 @@
 - Ceph
 - ZFS
 - OpenEBS
-- MinIO
+- [MinIO](storage/minio.yml)
 - Juniper
 - CoreDNS
  
@@ -60,3 +60,4 @@
  - [Jenkins](some/jenkins.yml)
  - [VMware](some/vmware.md)
  - [Node Exporter](https://github.com/philyuchkoff/prometheus-alerts/blob/master/some/node-exporter.md)
+ - [SSL/TLS](some/ssltls.yml)
