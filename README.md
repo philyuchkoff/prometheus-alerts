@@ -39,7 +39,7 @@
 ### Orchestrators
 - [Kubernetes](orchestrators/k8s.md)
 - Nomad
-- Consul
+- [Consul](orchestrators/consul.md)
 - Etcd
 - Linkerd
 - [Istio](https://github.com/philyuchkoff/prometheus-alerts/blob/master/orchestrators/istio.md)
