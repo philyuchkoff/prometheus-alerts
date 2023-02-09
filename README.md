@@ -37,12 +37,12 @@
 - Sidekiq
 
 ### Orchestrators
-- [Kubernetes](orchestrators/k8s.md)
-- Nomad
-- [Consul](orchestrators/consul.md)
-- Etcd
-- Linkerd
-- [Istio](https://github.com/philyuchkoff/prometheus-alerts/blob/master/orchestrators/istio.md)
+- [Kubernetes](orchestrators/k8s.yml)
+- [Nomad](orchestrators/nomad.yml)
+- [Consul](orchestrators/consul.yml)
+- [Etcd](orchestrators/etcd.yml)
+- [Linkerd](orchestrators/linkerd.yml)
+- [Istio](orchestrators/istio.yml)
 
 ### Network and storage
 - Ceph
@@ -54,9 +54,9 @@
  
 ### Some
 
- - Thanos
- - Loki
- - Promtail
- - Jenkins
+ - [Thanos](some/thanos.yml)
+ - [Loki](some/loki.yml)
+ - [Promtail](some/promtail.yml)
+ - [Jenkins](some/jenkins.yml)
  - [VMware](some/vmware.md)
  - [Node Exporter](https://github.com/philyuchkoff/prometheus-alerts/blob/master/some/node-exporter.md)
