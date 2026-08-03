@@ -1,5 +1,4 @@
 
-- [Exporters which I use always](https://github.com/philyuchkoff/prometheus-alerts/blob/master/exporters.md)
 - [Prometheus documentation](https://prometheus.io/docs/introduction/overview/)
 
 Готовые наборы правил Prometheus для разных компонентов. Все файлы `.yml` — валидные правила для подключения через `rule_files`.
