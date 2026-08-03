@@ -1,8 +1,8 @@
 
 - [Prometheus documentation](https://prometheus.io/docs/introduction/overview/)
-- [Русская версия](README-RU.md)
+- [English version](README.md)
 
-Ready-to-use Prometheus alert rules for various components. All `.yml` files are valid rules to include via `rule_files`.
+Готовые наборы правил Prometheus для разных компонентов. Все файлы `.yml` — валидные правила для подключения через `rule_files`.
 
 ### Prometheus
 [Prometheus self-monitoring](observability/prometheus.yml)
@@ -99,9 +99,9 @@ Ready-to-use Prometheus alert rules for various components. All `.yml` files are
 - [Keycloak](security/keycloak.yml)
 - [SSL/TLS](network/ssltls.yml)
 
-## How to use
+## Как подключить
 
-Add the rules you need to `rule_files` in the Prometheus config:
+В конфиге Prometheus добавьте нужные файлы в `rule_files`:
 
 ```yaml
 rule_files:
@@ -109,23 +109,23 @@ rule_files:
   - proxy/haproxy.yml
 ```
 
-## Releases
+## Релизы
 
-Rules are frozen into versioned releases. Each release is tagged `vX.Y.Z` and described in [CHANGELOG.md](CHANGELOG.md). Pin rules to a tag for reproducibility:
+Правила «заморожены» в релизах по версиям. Каждый релиз сопровождается тегом `vX.Y.Z` и описанием в [CHANGELOG.md](CHANGELOG.md). Подключайте пакет правил по тегу для воспроизводимости:
 
 ```
 https://raw.githubusercontent.com/philyuchkoff/prometheus-alerts/<tag>/databases/mysql.yml
 ```
 
-Create a new release manually via GitHub Releases or via `git tag vX.Y.Z && git push --tags`.
+Новый релиз создаётся вручную через GitHub Releases или через `git tag vX.Y.Z && git push --tags`.
 
 ## CI
 
-Every PR and push to `master` runs `promtool check rules` against all rule files and `promtool test rules` for unit tests (see `.github/workflows/validate.yml`).
+Для каждого PR и пуша в `master` запускается проверка всех правил через `promtool check rules` и unit-тесты выражений через `promtool test rules` (см. `.github/workflows/validate.yml`).
 
-## Tests
+## Тесты
 
-Expressions are covered by unit tests (`promtool test rules` format) in the `tests/` directory:
+Выражения покрыты unit-тестами (формат `promtool test rules`) в каталоге `tests/`:
 
 ```
 promtool test rules tests/prometheus-test.yml
@@ -133,4 +133,4 @@ promtool test rules tests/mysql-test.yml
 promtool test rules tests/podman-test.yml
 ```
 
-To keep CI green for a new rules file, add a matching `tests/<name>-test.yml`.
+Чтобы добиться зелёного CI для нового файла правил, добавьте соответствующий `tests/<name>-test.yml`. 
