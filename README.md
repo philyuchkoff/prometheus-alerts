@@ -4,7 +4,7 @@
 Готовые наборы правил Prometheus для разных компонентов. Все файлы `.yml` — валидные правила для подключения через `rule_files`.
 
 ### Prometheus
-[Prometheus self-monitoring](prometheus.yml)
+[Prometheus self-monitoring](observability/prometheus.yml)
 
 ### Observability
 - [Grafana](observability/grafana.yml)
@@ -21,7 +21,7 @@
 - [Promtail](logging/promtail.yml)
 
 ### Docker Containers
-[cAdvisor](docker-containers.yml)
+[cAdvisor](container-runtimes/docker-containers.yml)
 
 ### Container runtimes
 - [Podman](container-runtimes/podman.yml)
@@ -100,7 +100,7 @@
 
 ## Как подключить
 
-В `prometheus.yml` добавьте нужные файлы в `rule_files`:
+В конфиге Prometheus добавьте нужные файлы в `rule_files`:
 
 ```yaml
 rule_files:
