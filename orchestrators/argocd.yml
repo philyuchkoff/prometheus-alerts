@@ -18,7 +18,7 @@ groups:
         description: "Application {{ $labels.name }} is out of sync (status {{ $labels.sync_status }})\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 
     - alert: ArgoCDAppHealthStatusDegraded
-      expr: 'argocd_app_info{health_status == "Degraded"} == 1'
+      expr: 'argocd_app_info{health_status="Degraded"} == 1'
       for: 5m
       labels:
         severity: critical
@@ -27,7 +27,7 @@ groups:
         description: "Application {{ $labels.name }} is degraded\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 
     - alert: ArgoCDAppSyncProgressing
-      expr: 'argocd_app_info{sync_status == "Progressing"} == 1'
+      expr: 'argocd_app_info{sync_status="Progressing"} == 1'
       for: 1h
       labels:
         severity: warning

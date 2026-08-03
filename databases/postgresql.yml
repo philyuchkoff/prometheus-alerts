@@ -139,7 +139,7 @@ groups:
       summary: Postgresql high rate deadlock (instance {{ $labels.instance }})
       description: "Postgres detected deadlocks\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
   - alert: PostgresqlReplicationLabBytes
-    expr: (pg_xlog_position_bytes and pg_replication_is_replica == 0) - GROUP_RIGHT(instance) (pg_xlog_position_bytes and pg_replication_is_replica == 1) > 1e+09
+    expr: 'pg_replication_lag_bytes > 1e+09'
     for: 5m
     labels:
       severity: critical

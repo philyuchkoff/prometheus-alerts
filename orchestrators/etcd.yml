@@ -1,6 +1,6 @@
 groups:
 
-- name: EmbeddedExporter
+- name: Etcd
 
   rules:
 
@@ -40,7 +40,7 @@ groups:
         summary: Etcd high number of failed GRPC requests (instance {{ $labels.instance }})
         description: "More than 1% GRPC request failure detected in Etcd\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 
-    - alert: EtcdHighNumberOfFailedGrpcRequests
+    - alert: EtcdHighNumberOfFailedGrpcRequestsCritical
       expr: 'sum(rate(grpc_server_handled_total{grpc_code!="OK"}[1m])) BY (grpc_service, grpc_method) / sum(rate(grpc_server_handled_total[1m])) BY (grpc_service, grpc_method) > 0.05'
       for: 2m
       labels:
@@ -67,7 +67,7 @@ groups:
         summary: Etcd high number of failed HTTP requests (instance {{ $labels.instance }})
         description: "More than 1% HTTP failure detected in Etcd\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 
-    - alert: EtcdHighNumberOfFailedHttpRequests
+    - alert: EtcdHighNumberOfFailedHttpRequestsCritical
       expr: 'sum(rate(etcd_http_failed_total[1m])) BY (method) / sum(rate(etcd_http_received_total[1m])) BY (method) > 0.05'
       for: 2m
       labels:

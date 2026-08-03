@@ -2,7 +2,7 @@
 
 groups:
 
-- name: EmbeddedExporter
+- name: Istio
 
   rules:
 

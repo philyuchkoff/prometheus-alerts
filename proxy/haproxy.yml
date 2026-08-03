@@ -59,7 +59,7 @@ groups:
       summary: HAProxy server connection errors (instance {{ $labels.instance }})
       description: "Too many connection errors to {{ $labels.server }} server (> 100 req/s). Request throughput may be to high.\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
   - alert: HaproxyBackendMaxActiveSession
-    expr: avg_over_time(((sum by (proxy) (haproxy_server_max_sessions)) / (sum by (proxy) (haproxy_server_limit_sessions))) [2m]) * 100 > 80
+    expr: 'max_over_time((sum by (proxy) (haproxy_server_max_sessions) / sum by (proxy) (haproxy_server_limit_sessions))[2m:]) * 100 > 80'
     for: 2m
     labels:
       severity: warning
