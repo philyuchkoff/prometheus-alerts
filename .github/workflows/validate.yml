@@ -1,0 +1,43 @@
+name: Validate rules
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+
+jobs:
+  promtool-check:
+    name: promtool check rules
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download prometheus
+        run: |
+          PROM_VERSION=3.13.2
+          curl -sSL "https://github.com/prometheus/prometheus/releases/download/v${PROM_VERSION}/prometheus-${PROM_VERSION}.linux-amd64.tar.gz" -o /tmp/prometheus.tar.gz
+          tar -xzf /tmp/prometheus.tar.gz -C /tmp
+          echo "/tmp/prometheus-${PROM_VERSION}.linux-amd64" >> "$GITHUB_PATH"
+
+      - name: Validate rules
+        run: |
+          err=0
+          for f in $(find . -name '*.yml' -type f ! -path './.git/*' ! -path './tests/*' ! -path './.github/*'); do
+            echo "Checking $f"
+            if ! promtool check rules "$f"; then
+              err=1
+            fi
+          done
+          exit $err
+
+      - name: Test rules
+        run: |
+          err=0
+          for f in $(find tests -name '*.yml' -type f); do
+            echo "Testing $f"
+            if ! promtool test rules "$f"; then
+              err=1
+            fi
+          done
+          exit $err
