@@ -2,3 +2,6 @@
 *.swp
 .idea/
 .vscode/
+
+# Личные планы задач
+docs/plans/todo.md
