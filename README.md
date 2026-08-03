@@ -96,6 +96,4 @@
 ### Security
 - [Keycloak](security/keycloak.yml)
 - [SSL/TLS](network/ssltls.yml)
-
-### Планы
-- ZFS, OpenEBS, Juniper, CoreDNS — в планах
+- 
