@@ -28,15 +28,6 @@
       summary: Prometheus target missing (instance {{ $labels.instance }})
       description: "A Prometheus target has disappeared. An exporter might be crashed.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 
-  - alert: PrometheusJobMissing
-    expr: absent(up{job="prometheus"})
-    for: 0m
-    labels:
-      severity: warning
-    annotations:
-      summary: Prometheus job missing (instance {{ $labels.instance }})
-      description: "A Prometheus job has disappeared\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
-
   - alert: PrometheusConfigurationReloadFailure
     expr: prometheus_config_last_reload_successful != 1
     for: 0m

@@ -45,7 +45,7 @@
 - [Istio](orchestrators/istio.yml)
 
 ### Network and storage
-- Ceph
+- [Ceph](storage/ceph.md)
 - ZFS
 - OpenEBS
 - [MinIO](storage/minio.yml)

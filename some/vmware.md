@@ -16,7 +16,7 @@
 ## Virtual Machine Memory Critical
 #### High memory usage on {{ $labels.instance }}: {{ $value | printf "%.2f"}}%
 ````
-- alert: VirtualMachineMemoryCritical
+  - alert: VirtualMachineMemoryCritical
     expr: vmware_vm_mem_usage_average / 100 >= 90
     for: 1m
     labels:
@@ -29,7 +29,7 @@
 ## High Number of Snapshots
 #### High snapshots number on {{ $labels.instance }}: {{ $value }}
 ````
-- alert: HighNumberOfSnapshots
+  - alert: HighNumberOfSnapshots
     expr: vmware_vm_snapshots > 3
     for: 30m
     labels:
@@ -42,7 +42,7 @@
 ## Outdated Snapshots
 #### Outdated snapshots on {{ $labels.instance }}: {{ $value | printf "%.0f"}} days
 ````
-- alert: OutdatedSnapshots
+  - alert: OutdatedSnapshots
     expr: (time() - vmware_vm_snapshot_timestamp_seconds) / (60 * 60 * 24) >= 3
     for: 5m
     labels:
