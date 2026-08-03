@@ -1,0 +1,44 @@
+rule_files:
+  - ../prometheus.yml
+
+evaluation_interval: 1m
+
+tests:
+- interval: 1m
+  input_series:
+  - series: 'up{job="other"}'
+    values: '1'
+  alert_rule_test:
+  - eval_time: 1m
+    alertname: PrometheusJobMissing
+    exp_alerts:
+    - exp_labels:
+        job: prometheus
+        severity: warning
+      exp_annotations:
+        summary: Prometheus job missing (instance )
+        description: "A Prometheus job has disappeared\n  VALUE = 1\n  LABELS: map[job:prometheus]"
+  - eval_time: 1m
+    alertname: PrometheusAllTargetsMissing
+    exp_alerts: []
+  - eval_time: 1m
+    alertname: PrometheusNotConnectedToAlertmanager
+    exp_alerts: []
+- interval: 1m
+  input_series:
+  - series: 'up{job="prometheus", instance="local"}'
+    values: '0'
+  alert_rule_test:
+  - eval_time: 1m
+    alertname: PrometheusTargetMissing
+    exp_alerts:
+    - exp_labels:
+        instance: local
+        job: prometheus
+        severity: critical
+      exp_annotations:
+        summary: Prometheus target missing (instance local)
+        description: "A Prometheus target has disappeared. An exporter might be crashed.\n  VALUE = 0\n  LABELS = map[__name__:up instance:local job:prometheus]"
+  - eval_time: 1m
+    alertname: PrometheusAllTargetsMissing
+    exp_alerts: []

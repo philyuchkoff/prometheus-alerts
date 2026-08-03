@@ -1,0 +1,50 @@
+rule_files:
+  - ../container-runtimes/podman.yml
+
+evaluation_interval: 1m
+
+tests:
+- interval: 1m
+  input_series:
+  - series: 'podman_container_state{name="web", instance="h1"}'
+    values: '1x10'
+  alert_rule_test:
+  - eval_time: 5m
+    alertname: PodmanContainerNotRunning
+    exp_alerts:
+    - exp_labels:
+        instance: h1
+        name: web
+        severity: warning
+      exp_annotations:
+        summary: Podman container not running (instance h1)
+        description: "Container web is not in running state (state = 1).\n  VALUE = 1\n  LABELS = map[__name__:podman_container_state instance:h1 name:web]"
+  - eval_time: 5m
+    alertname: PodmanContainerUnhealthy
+    exp_alerts: []
+- interval: 1m
+  input_series:
+  - series: 'podman_container_state{name="web", instance="h1"}'
+    values: '2x10'
+  alert_rule_test:
+  - eval_time: 5m
+    alertname: PodmanContainerNotRunning
+    exp_alerts: []
+  - eval_time: 5m
+    alertname: PodmanExporterDown
+    exp_alerts: []
+- interval: 1m
+  input_series:
+  - series: 'up{job="podman", instance="h1"}'
+    values: '0x10'
+  alert_rule_test:
+  - eval_time: 5m
+    alertname: PodmanExporterDown
+    exp_alerts:
+    - exp_labels:
+        instance: h1
+        job: podman
+        severity: critical
+      exp_annotations:
+        summary: Podman exporter down (instance h1)
+        description: "Podman exporter has disappeared from Prometheus target discovery.\n  VALUE = 0\n  LABELS = map[__name__:up instance:h1 job:podman]"

@@ -1,0 +1,34 @@
+rule_files:
+  - ../databases/mysql.yml
+
+evaluation_interval: 1m
+
+tests:
+- interval: 1m
+  input_series:
+  - series: 'mysql_up{instance="db1"}'
+    values: '0x10'
+  alert_rule_test:
+  - eval_time: 5m
+    alertname: MysqlDown
+    exp_alerts:
+    - exp_labels:
+        instance: db1
+        severity: critical
+      exp_annotations:
+        summary: MySQL down (instance db1)
+        description: "MySQL instance is down on db1\n  VALUE = 0\n  LABELS: map[__name__:mysql_up instance:db1]"
+  - eval_time: 5m
+    alertname: MysqlTooManyConnections
+    exp_alerts: []
+- interval: 1m
+  input_series:
+  - series: 'mysql_up{instance="db1"}'
+    values: '1'
+  alert_rule_test:
+  - eval_time: 5m
+    alertname: MysqlDown
+    exp_alerts: []
+  - eval_time: 5m
+    alertname: MysqlRestarted
+    exp_alerts: []
