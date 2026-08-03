@@ -1,0 +1,26 @@
+# Инструмент: VictoriaMetrics: https://victoriametrics.com/
+# Метрики: встроенные /metrics, совместимы с prometheus
+
+groups:
+
+- name: VictoriaMetrics
+
+  rules:
+
+    - alert: VictoriaMetricsDown
+      expr: 'up{job="victoriametrics"} == 0'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: VictoriaMetrics down (instance {{ $labels.instance }})
+        description: "VictoriaMetrics instance is down\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: VictoriaMetricsTooManyRestarts
+      expr: 'changes(process_start_time_seconds{job="victoriametrics"}[15m]) > 2'
+      for: 0m
+      labels:
+        severity: warning
+      annotations:
+        summary: VictoriaMetrics too many restarts (instance {{ $labels.instance }})
+        description: "VictoriaMetrics has restarted more than twice in the last 15 minutes.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

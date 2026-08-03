@@ -1,0 +1,26 @@
+# Инструмент: Harbor (реестр контейнеров): https://goharbor.io/
+# Метрики встроенные: /metrics
+
+groups:
+
+- name: Harbor
+
+  rules:
+
+    - alert: HarborDown
+      expr: 'up{job="harbor"} == 0'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: Harbor down (instance {{ $labels.instance }})
+        description: "Harbor instance is down\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: HarborTooManyRestarts
+      expr: 'changes(process_start_time_seconds{job="harbor"}[15m]) > 2'
+      for: 0m
+      labels:
+        severity: warning
+      annotations:
+        summary: Harbor too many restarts (instance {{ $labels.instance }})
+        description: "Harbor has restarted more than twice in the last 15 minutes.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

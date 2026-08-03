@@ -1,0 +1,26 @@
+# Инструмент: Sidekiq (Ruby background jobs): https://github.com/sidekiq/
+# Экспортер: https://github.com/discourse/prometheus_exporter или метрики приложения
+
+groups:
+
+- name: Sidekiq
+
+  rules:
+
+    - alert: SidekiqQueueDepth
+      expr: 'sidekiq_queue_depth_sum > 1000'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Sidekiq queue depth (instance {{ $labels.instance }})
+        description: "Sidekiq default queue depth is above 1000\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: SidekiqWorkerRestarting
+      expr: 'changes(process_start_time_seconds{job="sidekiq"}[15m]) > 2'
+      for: 0m
+      labels:
+        severity: warning
+      annotations:
+        summary: Sidekiq worker restarting (instance {{ $labels.instance }})
+        description: "Sidekiq has restarted more than twice in the last 15 minutes.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

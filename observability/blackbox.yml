@@ -1,0 +1,43 @@
+# Инструмент: Blackbox Exporter (черный ящик): https://github.com/prometheus/blackbox_exporter
+
+groups:
+
+- name: Blackbox
+
+  rules:
+
+    - alert: BlackboxProbeDown
+      expr: 'probe_success == 0'
+      for: 2m
+      labels:
+        severity: critical
+      annotations:
+        summary: Blackbox probe down (instance {{ $labels.instance }})
+        description: "Probe failed for {{ $labels.target }}\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: BlackboxProbeHttpFailure
+      expr: 'probe_http_status_code == 0'
+      for: 2m
+      labels:
+        severity: critical
+      annotations:
+        summary: Blackbox probe HTTP failure (instance {{ $labels.instance }})
+        description: "HTTP probe failed for {{ $labels.target }}\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: BlackboxProbeSslExpirySoon
+      expr: 'probe_ssl_earliest_cert_expiry - time() < 86400 * 7'
+      for: 0m
+      labels:
+        severity: warning
+      annotations:
+        summary: Blackbox probe SSL expiry soon (instance {{ $labels.instance }})
+        description: "SSL certificate for {{ $labels.target }} expires in less than 7 days\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: BlackboxProbeSlow
+      expr: 'probe_duration_seconds > 10'
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: Blackbox probe slow (instance {{ $labels.instance }})
+        description: "Probe of {{ $labels.target }} took more than 10 seconds\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

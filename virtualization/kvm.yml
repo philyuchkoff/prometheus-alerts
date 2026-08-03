@@ -1,0 +1,16 @@
+# Инструмент: KVM/libvirt (libvirt exporter): https://github.com/kumina/libvirt_exporter
+
+groups:
+
+- name: KvmLibvirt
+
+  rules:
+
+    - alert: LibvirtDown
+      expr: 'up{job="libvirt"} == 0'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: libvirt exporter down (instance {{ $labels.instance }})
+        description: "libvirt exporter target is down\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

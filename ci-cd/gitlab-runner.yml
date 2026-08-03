@@ -1,0 +1,25 @@
+# Инструмент: GitLab Runner (метрики GitLab runner exporter: /metrics)
+
+groups:
+
+- name: GitlabRunner
+
+  rules:
+
+    - alert: GitlabRunnerDown
+      expr: 'up{job="gitlab-runner"} == 0'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: GitLab Runner down (instance {{ $labels.instance }})
+        description: "GitLab Runner instance is down\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: GitlabRunnerTooManyRestarts
+      expr: 'changes(process_start_time_seconds{job="gitlab-runner"}[15m]) > 2'
+      for: 0m
+      labels:
+        severity: warning
+      annotations:
+        summary: GitLab Runner too many restarts (instance {{ $labels.instance }})
+        description: "GitLab Runner has restarted more than twice in the last 15 minutes.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

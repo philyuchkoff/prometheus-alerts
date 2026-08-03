@@ -1,0 +1,35 @@
+# Инструмент: Patroni (HA-слой PostgreSQL): https://patroni.readthedocs.io/
+# Экспортер: встроенный метрики на :8008/metrics
+
+groups:
+
+- name: Patroni
+
+  rules:
+
+    - alert: PatroniDown
+      expr: 'up{job="patroni"} == 0'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: Patroni down (instance {{ $labels.instance }})
+        description: "Patroni instance is down\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: PatroniLeaderMissing
+      expr: 'sum(patroni_role{role="leader"}) == 0'
+      for: 2m
+      labels:
+        severity: critical
+      annotations:
+        summary: Patroni leader missing (instance {{ $labels.instance }})
+        description: "Patroni cluster has no leader\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: PatroniTooManyLeaders
+      expr: 'sum(patroni_role{role="leader"}) > 1'
+      for: 2m
+      labels:
+        severity: critical
+      annotations:
+        summary: Patroni too many leaders (instance {{ $labels.instance }})
+        description: "Patroni cluster has multiple leaders (split brain)\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

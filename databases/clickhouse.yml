@@ -1,0 +1,35 @@
+# Инструмент: ClickHouse: https://clickhouse.com/docs/integrations/prometheus
+# Экспортер: https://github.com/ClickHouse/clickhouse-exporter
+
+groups:
+
+- name: ClickHouse
+
+  rules:
+
+    - alert: ClickHouseDown
+      expr: 'up{job="clickhouse"} == 0'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: ClickHouse down (instance {{ $labels.instance }})
+        description: "ClickHouse instance is down\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: ClickHouseTooManyRestarts
+      expr: 'changes(process_start_time_seconds{job="clickhouse"}[15m]) > 2'
+      for: 0m
+      labels:
+        severity: warning
+      annotations:
+        summary: ClickHouse too many restarts (instance {{ $labels.instance }})
+        description: "ClickHouse has restarted more than twice in the last 15 minutes.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: ClickHouseReplicaLag
+      expr: 'max by (instance) (clickhouse_metrics_replicas_queue_inserts_pending) > 100'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: ClickHouse replica lag (instance {{ $labels.instance }})
+        description: "ClickHouse replica has pending inserts\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

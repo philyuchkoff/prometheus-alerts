@@ -1,0 +1,52 @@
+# Инструмент: Alertmanager (метрики /metrics самого Alertmanager)
+
+groups:
+
+- name: Alertmanager
+
+  rules:
+
+    - alert: AlertmanagerDown
+      expr: 'up{job="alertmanager"} == 0'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: Alertmanager down (instance {{ $labels.instance }})
+        description: "Alertmanager instance is down\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: AlertmanagerTooManyRestarts
+      expr: 'changes(process_start_time_seconds{job="alertmanager"}[15m]) > 2'
+      for: 0m
+      labels:
+        severity: warning
+      annotations:
+        summary: Alertmanager too many restarts (instance {{ $labels.instance }})
+        description: "Alertmanager has restarted more than twice in the last 15 minutes.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: AlertmanagerNotificationsFailing
+      expr: 'rate(alertmanager_notifications_failed_total[1m]) > 0'
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: Alertmanager notifications failing (instance {{ $labels.instance }})
+        description: "Alertmanager is failing to send notifications\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: AlertmanagerClusterSplitBrain
+      expr: 'count(alertmanager_cluster_members) by (instance) < 2'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Alertmanager cluster split brain (instance {{ $labels.instance }})
+        description: "Alertmanager cluster has less than 2 members\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: AlertmanagerConfigReloadFailure
+      expr: 'alertmanager_config_last_reload_successful != 1'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: Alertmanager config reload failure (instance {{ $labels.instance }})
+        description: "Alertmanager config reload failed\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

@@ -1,0 +1,36 @@
+# Инструмент: ArgoCD (GitOps): https://argo-cd.readthedocs.io/
+# Экспосер: https://github.com/argoproj-labs/argocd-agent/tree/main? Нет, встроенные метрики /metrics
+# Базовая метрика: argocd_app_info
+
+groups:
+
+- name: ArgoCD
+
+  rules:
+
+    - alert: ArgoCDAppOutOfSync
+      expr: 'argocd_app_info{sync_status!="Synced"} == 1'
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: ArgoCD app out of sync (instance {{ $labels.instance }})
+        description: "Application {{ $labels.name }} is out of sync (status {{ $labels.sync_status }})\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: ArgoCDAppHealthStatusDegraded
+      expr: 'argocd_app_info{health_status == "Degraded"} == 1'
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: ArgoCD app health status degraded (instance {{ $labels.instance }})
+        description: "Application {{ $labels.name }} is degraded\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: ArgoCDAppSyncProgressing
+      expr: 'argocd_app_info{sync_status == "Progressing"} == 1'
+      for: 1h
+      labels:
+        severity: warning
+      annotations:
+        summary: ArgoCD app sync progressing (instance {{ $labels.instance }})
+        description: "Application {{ $labels.name }} is stuck in Progressing state\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

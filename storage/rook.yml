@@ -1,0 +1,26 @@
+# Инструмент: Rook/Ceph Operator (K8s storage): https://rook.io/
+# Экспортер: встроенные метрики оператора
+
+groups:
+
+- name: Rook
+
+  rules:
+
+    - alert: RookOperatorDown
+      expr: 'up{job="rook-ceph-operator"} == 0'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: Rook operator down (instance {{ $labels.instance }})
+        description: "Rook-Ceph operator is down\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: RookCephClusterNotHealthy
+      expr: 'rook_ceph_cluster_health_status > 0'
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: Rook Ceph cluster not healthy (instance {{ $labels.instance }})
+        description: "Ceph cluster health is degraded\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

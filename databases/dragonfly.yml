@@ -1,0 +1,26 @@
+# Инструмент: DragonflyDB (Redis-совместимая in-memory БД): https://www.dragonflydb.io/
+# Экспортер: встроенные метрики :6379/metrics
+
+groups:
+
+- name: Dragonfly
+
+  rules:
+
+    - alert: DragonflyDown
+      expr: 'up{job="dragonfly"} == 0'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: DragonflyDB down (instance {{ $labels.instance }})
+        description: "DragonflyDB instance is down\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: DragonflyMemoryHigh
+      expr: 'dragonfly_memory_used_bytes / dragonfly_memory_limit_bytes * 100 > 90'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: DragonflyDB memory high (instance {{ $labels.instance }})
+        description: "DragonflyDB memory usage is above 90%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

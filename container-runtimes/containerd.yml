@@ -1,0 +1,17 @@
+# Инструмент: containerd (контейнерный runtайм): https://containerd.io/
+# Экспортер: metric-deliver ctr
+
+groups:
+
+- name: Containerd
+
+  rules:
+
+    - alert: ContainerdDown
+      expr: 'up{job="containerd"} == 0'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: containerd down (instance {{ $labels.instance }})
+        description: "containerd instance is down\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

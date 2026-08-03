@@ -1,0 +1,25 @@
+# Инструмент: Proxmox VE (PVE exporter): https://github.com/prometheus-pve/prometheus-pve-exporter
+
+groups:
+
+- name: Proxmox
+
+  rules:
+
+    - alert: ProxmoxDown
+      expr: 'up{job="proxmox"} == 0'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: Proxmox down (instance {{ $labels.instance }})
+        description: "Proxmox node is down\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: ProxmoxHypervisorDown
+      expr: 'pve_up == 0'
+      for: 2m
+      labels:
+        severity: critical
+      annotations:
+        summary: Proxmox hypervisor down (instance {{ $labels.instance }})
+        description: "Proxmox hypervisor is down\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

@@ -1,0 +1,34 @@
+# Инструмент: IPMI exporter: https://github.com/gebn/ipmi_exporter
+
+groups:
+
+- name: IpmiExporter
+
+  rules:
+
+    - alert: IpmiDown
+      expr: 'up{job="ipmi"} == 0'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: IPMI down (instance {{ $labels.instance }})
+        description: "IPMI exporter target is down\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: IpmiTemperatureHigh
+      expr: 'ipmi_sensor_value{name=~".*temperature.*"} > 75'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: IPMI temperature high (instance {{ $labels.instance }})
+        description: "Sensor {{ $labels.name }} is above 75C\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: IpmiFanFailure
+      expr: 'ipmi_sensor_value{name=~".*fan.*"} == 0'
+      for: 2m
+      labels:
+        severity: critical
+      annotations:
+        summary: IPMI fan failure (instance {{ $labels.instance }})
+        description: "Fan sensor {{ $labels.name }} is at 0 RPM\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

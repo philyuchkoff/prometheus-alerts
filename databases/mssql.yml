@@ -1,0 +1,34 @@
+# Инструмент: MSSQL (экспортер: https://github.com/awslabs/mssql_exporter)
+
+groups:
+
+- name: Mssql
+
+  rules:
+
+    - alert: MssqlDown
+      expr: 'up{job="mssql"} == 0'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: MSSQL down (instance {{ $labels.instance }})
+        description: "MSSQL instance is down\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: MssqlCpuHigh
+      expr: 'avg by (instance) (rate(mssql_cpu_usage_seconds_total[2m])) * 100 > 80'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: MSSQL CPU high (instance {{ $labels.instance }})
+        description: "MSSQL CPU usage is above 80%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: MssqlMemoryHigh
+      expr: 'mssql_physical_memory_usage_bytes / mssql_physical_memory_capacity_bytes * 100 > 90'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: MSSQL memory high (instance {{ $labels.instance }})
+        description: "MSSQL memory usage is above 90%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

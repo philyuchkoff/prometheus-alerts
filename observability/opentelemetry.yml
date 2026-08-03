@@ -1,0 +1,34 @@
+# Инструмент: OpenTelemetry Collector: https://github.com/open-telemetry/opentelemetry-collector
+
+groups:
+
+- name: OpenTelemetry
+
+  rules:
+
+    - alert: OTelCollectorDown
+      expr: 'up{job=~"otel.*"} == 0'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: OpenTelemetry Collector down (instance {{ $labels.instance }})
+        description: "OpenTelemetry Collector instance is down\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: OTelCollectorExporterFailures
+      expr: 'rate(otelcol_exporter_sent_spans_net_failure{job=~"otel.*"}[5m]) > 0'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: OpenTelemetry Collector exporter failures (instance {{ $labels.instance }})
+        description: "OpenTelemetry Collector exporter has failures\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: OTelCollectorQueueFull
+      expr: 'otelcol_exporter_queue_size{job=~"otel.*"} > 5000'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: OpenTelemetry Collector queue full (instance {{ $labels.instance }})
+        description: "OpenTelemetry Collector queue is full\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

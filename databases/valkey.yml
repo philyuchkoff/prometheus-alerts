@@ -1,0 +1,36 @@
+# Инструмент: Valkey (Redis-совместимый, форк Redis)
+# Экспортер совместим с redis_exporter: https://github.com/valkey-io/valkey
+# https://github.com/oliver006/redis_exporter
+
+groups:
+
+- name: Valkey
+
+  rules:
+
+    - alert: ValkeyDown
+      expr: 'up{job="valkey"} == 0'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: Valkey down (instance {{ $labels.instance }})
+        description: "Valkey instance is down\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: ValkeyOutOfMemory
+      expr: 'redis_memory_used_bytes / redis_total_system_memory_bytes * 100 > 90'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Valkey out of memory (instance {{ $labels.instance }})
+        description: "Valkey is running out of memory (> 90%)\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: ValkeyReplicationBroken
+      expr: 'delta(redis_connected_slaves[1m]) < 0'
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: Valkey replication broken (instance {{ $labels.instance }})
+        description: "Valkey instance lost a replica\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

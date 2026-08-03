@@ -1,0 +1,26 @@
+# Инструмент: K3s (лёгкий Kubernetes): https://k3s.io/
+# Метрики: как у Kubernetes + kube-state-metrics. Этот файл дублирует часть k8s.yml, только под k3s job.
+
+groups:
+
+- name: K3s
+
+  rules:
+
+    - alert: K3sNodeReady
+      expr: 'kube_node_status_condition{condition="Ready",status="true",job="k3s"} == 0'
+      for: 10m
+      labels:
+        severity: critical
+      annotations:
+        summary: K3s node ready (instance {{ $labels.instance }})
+        description: "Node {{ $labels.node }} has been unready for a long time\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: K3sPodNotHealthy
+      expr: 'sum by (namespace, pod) (kube_pod_status_phase{phase=~"Pending|Unknown|Failed",job="k3s"}) > 0'
+      for: 15m
+      labels:
+        severity: critical
+      annotations:
+        summary: K3s pod not healthy (instance {{ $labels.instance }})
+        description: "Pod has been in a non-ready state for longer than 15 minutes.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

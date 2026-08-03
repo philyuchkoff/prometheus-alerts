@@ -1,0 +1,34 @@
+# Инструмент: Tempo (распределённые трассировки): https://grafana.com/docs/tempo/
+
+groups:
+
+- name: Tempo
+
+  rules:
+
+    - alert: TempoDown
+      expr: 'up{job="tempo"} == 0'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: Tempo down (instance {{ $labels.instance }})
+        description: "Tempo instance is down\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: TempoRequestErrors
+      expr: 'sum(rate(tempo_request_duration_seconds_count{status_code=~"5.."}[5m])) by (instance) > 0'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Tempo request errors (instance {{ $labels.instance }})
+        description: "Tempo is experiencing request errors\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: TempoTooManyRestarts
+      expr: 'changes(process_start_time_seconds{job="tempo"}[15m]) > 2'
+      for: 0m
+      labels:
+        severity: warning
+      annotations:
+        summary: Tempo too many restarts (instance {{ $labels.instance }})
+        description: "Tempo has restarted more than twice in the last 15 minutes.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

@@ -1,0 +1,25 @@
+# Инструмент: Memcached: https://github.com/prometheus/memcached_exporter
+
+groups:
+
+- name: Memcached
+
+  rules:
+
+    - alert: MemcachedDown
+      expr: 'up{job="memcached"} == 0'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: Memcached down (instance {{ $labels.instance }})
+        description: "Memcached instance is down\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: MemcachedHighEvictions
+      expr: 'rate(memcached_evictions_total[5m]) > 100'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Memcached high evictions (instance {{ $labels.instance }})
+        description: "Memcached is evicting many items\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

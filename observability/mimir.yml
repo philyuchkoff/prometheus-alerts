@@ -1,0 +1,34 @@
+# Инструмент: Mimir (метрики, HA): https://grafana.com/docs/mimir/
+
+groups:
+
+- name: Mimir
+
+  rules:
+
+    - alert: MimirDown
+      expr: 'up{job="mimir"} == 0'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: Mimir down (instance {{ $labels.instance }})
+        description: "Mimir instance is down\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: MimirRequestErrors
+      expr: 'sum(rate(mimir_request_duration_seconds_count{status_code=~"5.."}[5m])) by (instance) > 0'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Mimir request errors (instance {{ $labels.instance }})
+        description: "Mimir is experiencing request errors\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: MimirTooManyRestarts
+      expr: 'changes(process_start_time_seconds{job="mimir"}[15m]) > 2'
+      for: 0m
+      labels:
+        severity: warning
+      annotations:
+        summary: Mimir too many restarts (instance {{ $labels.instance }})
+        description: "Mimir has restarted more than twice in the last 15 minutes.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

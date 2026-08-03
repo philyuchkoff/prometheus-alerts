@@ -1,0 +1,26 @@
+# Инструмент: Keycloak (SSO/авторизация): https://www.keycloak.org/
+# Экспортер: встроенные метрики :8080/metrics (quarkus) или кастомный
+
+groups:
+
+- name: Keycloak
+
+  rules:
+
+    - alert: KeycloakDown
+      expr: 'up{job="keycloak"} == 0'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: Keycloak down (instance {{ $labels.instance }})
+        description: "Keycloak instance is down\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: KeycloakTooManyRestarts
+      expr: 'changes(process_start_time_seconds{job="keycloak"}[15m]) > 2'
+      for: 0m
+      labels:
+        severity: warning
+      annotations:
+        summary: Keycloak too many restarts (instance {{ $labels.instance }})
+        description: "Keycloak has restarted more than twice in the last 15 minutes.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

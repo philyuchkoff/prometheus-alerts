@@ -1,0 +1,25 @@
+# Инструмент: PHP-FPM (экспортер: https://github.com/hipages/php-fpm_exporter)
+
+groups:
+
+- name: PhpFpm
+
+  rules:
+
+    - alert: PhpFpmDown
+      expr: 'up{job="php-fpm"} == 0'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: PHP-FPM down (instance {{ $labels.instance }})
+        description: "PHP-FPM instance is down\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: PhpFpmActiveProcessesHigh
+      expr: 'php_fpm_processes_active > 100'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: PHP-FPM active processes high (instance {{ $labels.instance }})
+        description: "PHP-FPM has too many active processes\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

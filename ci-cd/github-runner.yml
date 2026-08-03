@@ -1,0 +1,17 @@
+# Инструмент: GitHub Actions runner (экспортер: https://github.com/actions-runners/mitmproxy? Нет)
+# Экспортер: аналог — самоэкспорт через github-actions-exporter или кастомный /metrics
+
+groups:
+
+- name: GithubRunner
+
+  rules:
+
+    - alert: GithubRunnerOffline
+      expr: 'up{job="github-runner"} == 0'
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: GitHub Runner offline (instance {{ $labels.instance }})
+        description: "GitHub Actions runner offline. Остановить задания не получится\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

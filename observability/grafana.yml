@@ -1,0 +1,43 @@
+# Инструмент: Grafana (самомониторинг через /metrics)
+
+groups:
+
+- name: Grafana
+
+  rules:
+
+    - alert: GrafanaDown
+      expr: 'up{job="grafana"} == 0'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: Grafana down (instance {{ $labels.instance }})
+        description: "Grafana instance is down\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: GrafanaTooManyRestarts
+      expr: 'changes(process_start_time_seconds{job="grafana"}[15m]) > 2'
+      for: 0m
+      labels:
+        severity: warning
+      annotations:
+        summary: Grafana too many restarts (instance {{ $labels.instance }})
+        description: "Grafana has restarted more than twice in the last 15 minutes.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: GrafanaActiveAlerts
+      expr: 'grafana_alerting_active_alerts > 0'
+      for: 0m
+      labels:
+        severity: warning
+      annotations:
+        summary: Grafana active alerts (instance {{ $labels.instance }})
+        description: "There are active Grafana alerts (value is {{ $value }}).\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: GrafanaFiringAlerts
+      expr: 'grafana_alerting_rule_evaluations_failed_total > 0'
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: Grafana firing alerts (instance {{ $labels.instance }})
+        description: "Grafana has failed rule evaluations\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

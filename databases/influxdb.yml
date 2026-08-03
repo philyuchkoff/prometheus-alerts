@@ -1,0 +1,25 @@
+# Инструмент: InfluxDB (экспортер: https://github.com/prometheus/influxdb_exporter)
+
+groups:
+
+- name: Influxdb
+
+  rules:
+
+    - alert: InfluxdbDown
+      expr: 'up{job="influxdb"} == 0'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: InfluxDB down (instance {{ $labels.instance }})
+        description: "InfluxDB instance is down\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: InfluxdbRequestErrors
+      expr: 'sum(rate(influxdb_httpd_request_errors[5m])) by (instance) > 0'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: InfluxDB request errors (instance {{ $labels.instance }})
+        description: "InfluxDB is experiencing request errors\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

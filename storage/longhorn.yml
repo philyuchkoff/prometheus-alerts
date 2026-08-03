@@ -1,0 +1,26 @@
+# Инструмент: Longhorn (K8s storage): https://longhorn.io/
+# Экспортер: встроенные метрики на :9500/metrics
+
+groups:
+
+- name: Longhorn
+
+  rules:
+
+    - alert: LonghornVolumeNotHealthy
+      expr: 'longhorn_volume_robustness{robustness!="healthy"} == 1'
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: Longhorn volume not healthy (instance {{ $labels.instance }})
+        description: "Longhorn volume {{ $labels.volume }} is not healthy (state {{ $labels.robustness }})\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: LonghornVolumeOutOfSpace
+      expr: 'longhorn_volume_available_bytes / longhorn_volume_capacity_bytes * 100 < 10'
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: Longhorn volume out of space (instance {{ $labels.instance }})
+        description: "Longhorn volume {{ $labels.volume }} is almost full\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
