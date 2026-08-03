@@ -1,0 +1,71 @@
+# prometheus-podman-exporter: https://github.com/containers/prometheus-podman-exporter
+# Запуск: prometheus-podman-exporter --collector.enable-all
+
+groups:
+
+- name: PodmanExporter
+
+  rules:
+
+    - alert: PodmanContainerNotRunning
+      expr: 'podman_container_state != 2'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Podman container not running (instance {{ $labels.instance }})
+        description: "Container {{ $labels.name }} is not in running state (state = {{ $value }}).\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: PodmanContainerRestarting
+      expr: 'increase(podman_container_exit_code[5m]) > 3'
+      for: 2m
+      labels:
+        severity: critical
+      annotations:
+        summary: Podman container restarting (instance {{ $labels.instance }})
+        description: "Container {{ $labels.name }} has restarted more than 3 times in the last 5 minutes. It might be crashlooping.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: PodmanContainerUnhealthy
+      expr: 'podman_container_health == 1'
+      for: 2m
+      labels:
+        severity: critical
+      annotations:
+        summary: Podman container unhealthy (instance {{ $labels.instance }})
+        description: "Container {{ $labels.name }} failed its healthcheck.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: PodmanContainerMemoryUsage
+      expr: '(sum by (instance, name) (podman_container_mem_usage_bytes) / sum by (instance, name) (podman_container_mem_limit_bytes > 0) * 100) > 80'
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: Podman container memory usage (instance {{ $labels.instance }})
+        description: "Container {{ $labels.name }} memory usage is above 80%.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: PodmanContainerHighCpuUsage
+      expr: 'sum by (instance, name) (rate(podman_container_cpu_seconds_total[5m]) * 100) > 80'
+      for: 5m
+      labels:
+        severity: info
+      annotations:
+        summary: Podman container high CPU usage (instance {{ $labels.instance }})
+        description: "Container {{ $labels.name }} CPU usage is above 80%.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: PodmanPodDegraded
+      expr: 'podman_pod_state == 5'
+      for: 2m
+      labels:
+        severity: critical
+      annotations:
+        summary: Podman pod degraded (instance {{ $labels.instance }})
+        description: "Pod {{ $labels.name }} is in degraded state.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: PodmanExporterDown
+      expr: 'up{job="podman"} == 0'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: Podman exporter down (instance {{ $labels.instance }})
+        description: "Podman exporter has disappeared from Prometheus target discovery.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
