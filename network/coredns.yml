@@ -1,0 +1,34 @@
+# Инструмент: CoreDNS (метрики встроены в coredns): https://coredns.io/
+
+groups:
+
+- name: CoreDns
+
+  rules:
+
+    - alert: CoreDnsDown
+      expr: 'up{job="coredns"} == 0'
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: CoreDNS down (instance {{ $labels.instance }})
+        description: "CoreDNS is down\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: CoreDnsRequestErrors
+      expr: 'sum by (instance) (rate(coredns_dns_responses_total{rcode=~"SERVFAIL|REFUSED|FORMERR"}[5m])) / sum by (instance) (rate(coredns_dns_responses_total[5m])) * 100 > 5'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: CoreDNS request errors (instance {{ $labels.instance }})
+        description: "CoreDNS is experiencing a high percentage of errors\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: CoreDnsSlowQueries
+      expr: 'histogram_quantile(0.99, sum(rate(coredns_dns_request_duration_seconds_bucket[1m])) by (le)) > 1'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: CoreDNS slow queries (instance {{ $labels.instance }})
+        description: "CoreDNS 99th percentile latency is above 1s\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
