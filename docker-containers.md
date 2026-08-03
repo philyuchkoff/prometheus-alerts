@@ -10,8 +10,9 @@
 
 ````
 # Если инфраструктура динамическая - часто и много контейнеров запускается, останавливается или перезапускается - может быть много ложных алертов
+# container_last_seen удалена из cAdvisor >= 0.30.0, поэтому отслеживаем исчезновение серии через container_start_time_seconds с offset
   - alert: ContainerKilled
-    expr: time() - container_last_seen > 60
+    expr: count by (instance) (container_start_time_seconds offset 5m) - count by (instance) (container_start_time_seconds) > 0
     for: 0m
     labels:
       severity: warning
@@ -25,7 +26,7 @@
 ````
 # Если инфраструктура динамическая - часто и много контейнеров запускается, останавливается или перезапускается - может быть много ложных алертов
   - alert: ContainerAbsent
-    expr: absent(container_last_seen)
+    expr: absent(container_start_time_seconds)
     for: 5m
     labels:
       severity: warning
