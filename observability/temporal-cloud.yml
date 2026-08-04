@@ -1,0 +1,99 @@
+# Инструмент: Temporal Cloud (управляемая платформа Temporal, OpenMetrics endpoint metrics.temporal.io)
+# Источник метрик: https://docs.temporal.io/cloud/metrics/openmetrics/metrics-reference
+# Метрики: temporal_cloud_v1_* (OpenMetrics, 1-минутные агрегаты)
+
+groups:
+
+- name: TemporalCloud
+
+  rules:
+
+    - alert: TemporalCloudServiceErrorRateHigh
+      expr: 'sum by (temporal_namespace, operation) (rate(temporal_cloud_v1_service_error_count[5m])) / clamp_min(sum by (temporal_namespace, operation) (rate(temporal_cloud_v1_service_request_count[5m])), 1) * 100 > 5'
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: Temporal Cloud high service error rate (instance {{ $labels.instance }})
+        description: "Temporal Cloud operation {{ $labels.operation }} in namespace {{ $labels.temporal_namespace }} is experiencing more than 5% errors.\n  VALUE = {{ $value }}%\n  LABELS = {{ $labels }}"
+
+    - alert: TemporalCloudResourceExhausted
+      expr: 'sum by (temporal_namespace) (rate(temporal_cloud_v1_resource_exhausted_error_count[5m]) OR on() vector(0)) > 0'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Temporal Cloud resource exhausted (instance {{ $labels.instance }})
+        description: "Temporal Cloud is returning ResourceExhausted errors in namespace {{ $labels.temporal_namespace }}. Burst of requests exceeded capacity; SDKs are retrying.\n  VALUE = {{ $value }}/sec\n  LABELS = {{ $labels }}"
+
+    - alert: TemporalCloudRequestThrottled
+      expr: 'sum by (temporal_namespace, operation) (rate(temporal_cloud_v1_service_request_throttled_count[5m])) / clamp_min(sum by (temporal_namespace, operation) (rate(temporal_cloud_v1_service_request_count[5m]) + rate(temporal_cloud_v1_service_request_throttled_count[5m])), 1) * 100 > 10'
+      for: 10m
+      labels:
+        severity: critical
+      annotations:
+        summary: Temporal Cloud requests throttled (instance {{ $labels.instance }})
+        description: "More than 10% of operation {{ $labels.operation }} requests are throttled against account/namespace limits in {{ $labels.temporal_namespace }}.\n  VALUE = {{ $value }}%\n  LABELS = {{ $labels }}"
+
+    - alert: TemporalCloudTotalActionsThrottled
+      expr: 'sum by (temporal_namespace) (rate(temporal_cloud_v1_total_action_throttled_count[5m])) / clamp_min(sum by (temporal_namespace) (rate(temporal_cloud_v1_total_action_count[5m]) + rate(temporal_cloud_v1_total_action_throttled_count[5m])), 1) * 100 > 10'
+      for: 15m
+      labels:
+        severity: critical
+      annotations:
+        summary: Temporal Cloud total actions throttled (instance {{ $labels.instance }})
+        description: "More than 10% of actions are throttled in namespace {{ $labels.temporal_namespace }}. Consider raising account action limits or reducing load.\n  VALUE = {{ $value }}%\n  LABELS = {{ $labels }}"
+
+    - alert: TemporalCloudServiceLatencyHigh
+      expr: 'temporal_cloud_v1_service_latency_p95 > 2'
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: Temporal Cloud high service latency (instance {{ $labels.instance }})
+        description: "Temporal Cloud 95th-percentile latency above 2s in namespace {{ $labels.temporal_namespace }} for operation {{ $labels.operation }}.\n  VALUE = {{ $value }}s\n  LABELS = {{ $labels }}"
+
+    - alert: TemporalCloudWorkflowFailureRateHigh
+      expr: 'sum by (temporal_namespace) (rate(temporal_cloud_v1_workflow_failed_count[5m])) / clamp_min(sum by (temporal_namespace) (rate(temporal_cloud_v1_workflow_success_count[5m]) + rate(temporal_cloud_v1_workflow_failed_count[5m])), 1) * 100 > 10'
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: Temporal Cloud high workflow failure rate (instance {{ $labels.instance }})
+        description: "More than 10% of workflows are failing in namespace {{ $labels.temporal_namespace }}. Likely a code or dependency problem in workers.\n  VALUE = {{ $value }}%\n  LABELS = {{ $labels }}"
+
+    - alert: TemporalCloudActivityFailRateHigh
+      expr: '(sum by (temporal_namespace) (rate(temporal_cloud_v1_activity_fail_count[5m]))) / clamp_min(sum by (temporal_namespace) (rate(temporal_cloud_v1_activity_success_count[5m]) + rate(temporal_cloud_v1_activity_fail_count[5m])), 1) * 100 > 15'
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: Temporal Cloud high activity failure rate (instance {{ $labels.instance }})
+        description: "More than 15% of activities are failing in namespace {{ $labels.temporal_namespace }}. Check activity code and downstream dependencies.\n  VALUE = {{ $value }}%\n  LABELS = {{ $labels }}"
+
+    - alert: TemporalCloudTaskQueueBacklogHigh
+      expr: 'temporal_cloud_v1_approximate_backlog_count > 1000'
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: Temporal Cloud task queue backlog high (instance {{ $labels.instance }})
+        description: "Task queue {{ $labels.temporal_task_queue }} ({{ $labels.task_type }}) in namespace {{ $labels.temporal_namespace }} has a backlog above 1000 tasks. Workers may be under-provisioned.\n  VALUE = {{ $value }} tasks\n  LABELS = {{ $labels }}"
+
+    - alert: TemporalCloudNoPollerOnTaskQueue
+      expr: 'sum by (temporal_namespace, temporal_task_queue, task_type) (rate(temporal_cloud_v1_no_poller_tasks_count[5m])) > 0'
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: Temporal Cloud task queue has no poller (instance {{ $labels.instance }})
+        description: "Tasks are being added to queue {{ $labels.temporal_task_queue }} without an active poller. A worker may be down or using a wrong task queue in {{ $labels.temporal_namespace }}.\n  VALUE = {{ $value }}/sec\n  LABELS = {{ $labels }}"
+
+    - alert: TemporalCloudPollerCapacityLow
+      expr: 'sum by (temporal_namespace, operation) (temporal_cloud_v1_service_pending_requests) / clamp_min(sum by (temporal_namespace, operation) (temporal_cloud_v1_poller_limit), 1) * 100 > 90'
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: Temporal Cloud poller capacity exhausted (instance {{ $labels.instance }})
+        description: "Active pollers for operation {{ $labels.operation }} in namespace {{ $labels.temporal_namespace }} are at {{ $value }}% of the poller limit. Work may back up.\n  VALUE = {{ $value }}%\n  LABELS = {{ $labels }}"

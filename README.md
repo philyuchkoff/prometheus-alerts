@@ -90,6 +90,7 @@ Ready-to-use Prometheus alert rules for various components. All `.yml` files are
 - [ArgoCD](orchestrators/argocd.yml)
 - [Harbor](orchestrators/harbor.yml)
 - [Temporal](orchestrators/temporal.yml)
+- [Temporal Cloud](observability/temporal-cloud.yml)
 - [FluxCD](orchestrators/fluxcd.yml)
 - [OpenStack](orchestrators/openstack.yml)
 - [OpenEBS](orchestrators/openebs.yml)
