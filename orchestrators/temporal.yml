@@ -1,0 +1,138 @@
+# Инструмент: Temporal (платформа durable workflow-движков, метрики встроены): https://docs.temporal.io/
+# Источник метрик: https://docs.temporal.io/references/cluster-metrics (Temporal Service metrics reference)
+
+groups:
+
+- name: Temporal
+
+  rules:
+
+    # ВАЖНО: Temporal отдаёт метрики без префикса по умолчанию (service_requests, service_errors и т.д.).
+    # Если в вашей конфигурации задан prometheus метрик-префикс (например, "temporal_"),
+    # добавьте его к именам метрик в выражениях ниже.
+
+    - alert: TemporalServiceDown
+      expr: 'up{job="temporal"} == 0'
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: Temporal Service down (instance {{ $labels.instance }})
+        description: "Temporal Service instance is down. Workflows and Activities can no longer be processed.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: TemporalServiceErrorRateHigh
+      expr: 'sum(rate(service_errors[5m])) / clamp_min(sum(rate(service_requests[5m])), 1) * 100 > 5'
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: Temporal Service high error rate (instance {{ $labels.instance }})
+        description: "Temporal Service is experiencing more than 5% errors across all operations.\n  VALUE = {{ $value }}%\n  LABELS = {{ $labels }}"
+
+    - alert: TemporalResourceExhaustedRequests
+      expr: 'sum(rate(service_errors_resource_exhausted[5m]) OR on() vector(0)) > 0'
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: Temporal Service resource exhausted (instance {{ $labels.instance }})
+        description: "Temporal Service is returning ResourceExhausted errors. Check RPS limits, persistence capacity and matching partitions.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: TemporalEntityNotFoundErrors
+      expr: 'sum(rate(service_errors_entity_not_found[5m]) OR on() vector(0)) / clamp_min(sum(rate(service_requests[5m]) OR on() vector(1)), 1) * 100 > 10'
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: Temporal high entity-not-found error rate (instance {{ $labels.instance }})
+        description: "A high number of EntityNotFound errors. Often indicates workflows or workflows history have been deleted while still referenced.\n  VALUE = {{ $value }}%\n  LABELS = {{ $labels }}"
+
+    - alert: TemporalClientErrorRateHigh
+      expr: 'sum(rate(client_errors[5m])) / clamp_min(sum(rate(client_requests[5m])), 1) * 100 > 5'
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: Temporal high client error rate (instance {{ $labels.instance }})
+        description: "High rate of client connection errors between Temporal Service roles. Indicates network or service availability problems.\n  VALUE = {{ $value }}%\n  LABELS = {{ $labels }}"
+
+    - alert: TemporalServiceLatencyHigh
+      expr: 'histogram_quantile(0.95, sum(rate(service_latency_bucket[5m])) by (le)) > 2'
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: Temporal Service high latency (instance {{ $labels.instance }})
+        description: "Temporal Service 95th-percentile latency is above 2s. Investigate which operation is slow.\n  VALUE = {{ $value }}s\n  LABELS = {{ $labels }}"
+
+    - alert: TemporalPersistenceErrorRateHigh
+      expr: '100 - (sum(rate(persistence_errors[2m]) OR on() vector(0)) / clamp_min(sum(rate(persistence_requests[2m]) OR on() vector(0)), 1) * 100) < 95 and sum(rate(persistence_requests[2m])) > 0'
+      for: 10m
+      labels:
+        severity: critical
+      annotations:
+        summary: Temporal persistence high error rate (instance {{ $labels.instance }})
+        description: "Temporal persistence success rate dropped below 95%. Database issues may impact the whole cluster.\n  VALUE = {{ $value }}%\n  LABELS = {{ $labels }}"
+
+    - alert: TemporalPersistenceLatencyHigh
+      expr: 'histogram_quantile(0.95, sum(rate(persistence_latency_bucket[1m])) by (operation, le)) > 1'
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: Temporal persistence high latency (instance {{ $labels.instance }})
+        description: "Temporal persistence 95th-percentile latency is above 1s. Check database performance.\n  VALUE = {{ $value }}s\n  LABELS = {{ $labels }}"
+
+    - alert: TemporalWorkflowFailureRateHigh
+      expr: 'sum by (temporal_namespace) (rate(workflow_failed{operation="CompletionStats"}[5m])) / clamp_min(sum by (temporal_namespace) (rate(workflow_success{operation="CompletionStats"}[5m]) + rate(workflow_failed{operation="CompletionStats"}[5m])), 1) * 100 > 10'
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: Temporal high workflow failure rate (instance {{ $labels.instance }})
+        description: "More than 10% of workflows are failing in namespace {{ $labels.temporal_namespace }}. Likely a code or dependency problem in workers.\n  VALUE = {{ $value }}%\n  LABELS = {{ $labels }}"
+
+    - alert: TemporalWorkflowTimeoutsHigh
+      expr: 'sum by (temporal_namespace) (rate(workflow_timeout{operation="CompletionStats"}[5m])) > 0'
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: Temporal workflow timeouts (instance {{ $labels.instance }})
+        description: "Workflows are timing out in namespace {{ $labels.temporal_namespace }}. Check configured timeouts and worker responsiveness.\n  VALUE = {{ $value }}/5m\n  LABELS = {{ $labels }}"
+
+    - alert: TemporalMemberLost
+      expr: 'sum(rate(membership_changed_count[5m])) > 0'
+      for: 10m
+      labels:
+        severity: critical
+      annotations:
+        summary: Temporal ring membership changed (instance {{ $labels.instance }})
+        description: "Temporal Service ring membership changed frequently. A node may be unstable or restarting.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: TemporalShardClosed
+      expr: 'sum(rate(shard_closed_count[10m])) > 0'
+      for: 10m
+      labels:
+        severity: critical
+      annotations:
+        summary: Temporal shards closed (instance {{ $labels.instance }})
+        description: "Temporal history shards are being closed. Usually indicates ownership flapping or overloaded history service.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: TemporalNoPollerOnTaskQueue
+      expr: 'sum(rate(no_poller_tasks[15m])) > 0'
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: Temporal task queue has no poller (instance {{ $labels.instance }})
+        description: "Tasks are being added to a task queue without an active poller. A worker may be down or using a wrong task queue.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: TemporalHistoryTaskErrorRateHigh
+      expr: 'sum(rate(task_errors[5m])) / clamp_min(sum(rate(task_requests[5m])), 1) * 100 > 5'
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: Temporal history task high error rate (instance {{ $labels.instance }})
+        description: "History task processing error rate is above 5%. Check history service and persistence health.\n  VALUE = {{ $value }}%\n  LABELS = {{ $labels }}"
