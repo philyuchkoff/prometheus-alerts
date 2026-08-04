@@ -1,3 +1,4 @@
+> **788+ production-ready Prometheus alerting rules for 80+ services — just copy-paste YAML**
 
 - [Prometheus documentation](https://prometheus.io/docs/introduction/overview/)
 - [Русская версия](README-RU.md)
