@@ -1,0 +1,27 @@
+# Инструмент: Meilisearch (метрики встроены): https://www.meilisearch.com/
+# Адаптировано из samber/awesome-prometheus-alerts (CC BY 4.0).
+# Источник: https://github.com/samber/awesome-prometheus-alerts
+
+groups:
+
+- name: EmbeddedExporter
+
+  rules:
+
+    - alert: MeilisearchIndexIsEmpty
+      expr: 'meilisearch_index_docs_count == 0'
+      for: 0m
+      labels:
+        severity: warning
+      annotations:
+        summary: Meilisearch index is empty (instance {{ $labels.instance }})
+        description: "Meilisearch index {{ $labels.index }} has zero documents\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: MeilisearchHttpResponseTime
+      expr: 'meilisearch_http_response_time_seconds > 0.5'
+      for: 0m
+      labels:
+        severity: warning
+      annotations:
+        summary: Meilisearch http response time (instance {{ $labels.instance }})
+        description: "Meilisearch http response time is too high\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

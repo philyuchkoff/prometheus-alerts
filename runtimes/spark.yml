@@ -1,0 +1,92 @@
+# Инструмент: Apache Spark (метрики Prometheus): https://spark.apache.org/
+# Адаптировано из samber/awesome-prometheus-alerts (CC BY 4.0).
+# Источник: https://github.com/samber/awesome-prometheus-alerts
+
+groups:
+
+- name: SparkPrometheus
+
+  # Spark exposes metrics via two built-in endpoints:
+  # - PrometheusServlet: master/worker/driver metrics at /metrics/prometheus/ (ports 8080, 8081, 4040)
+  # - PrometheusResource: executor metrics at /metrics/executors/prometheus/ (port 4040, requires spark.ui.prometheus.enabled=true in Spark 3.x)
+  # Metric names from PrometheusServlet include a dynamic namespace (application ID), making static PromQL queries challenging.
+  # Configuration: spark.metrics.conf.*.sink.prometheusServlet.class=org.apache.spark.metrics.sink.PrometheusServlet
+  rules:
+
+    - alert: SparkNoAliveWorkers
+      expr: 'metrics_master_aliveWorkers_Value == 0'
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: Spark no alive workers (instance {{ $labels.instance }})
+        description: "No Spark workers are alive. The cluster has no processing capacity.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # Adjust the threshold based on your cluster's typical queuing behavior.
+    - alert: SparkTooManyWaitingApps
+      expr: 'metrics_master_waitingApps_Value > 10'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Spark too many waiting apps (instance {{ $labels.instance }})
+        description: "Spark has {{ $value }} applications waiting for resources.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: SparkWorkerMemoryExhausted
+      expr: 'metrics_worker_memFree_MB_Value == 0'
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: Spark worker memory exhausted (instance {{ $labels.instance }})
+        description: "Spark worker {{ $labels.instance }} has no free memory ({{ $value }}MB free).\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # Fires when a worker has no free cores. This may be normal under high load but can indicate capacity issues.
+    - alert: SparkWorkerCoresExhausted
+      expr: 'metrics_worker_coresFree_Value == 0'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Spark worker cores exhausted (instance {{ $labels.instance }})
+        description: "Spark worker {{ $labels.instance }} has no free cores.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # Fires when more than 10% of executor time is spent in garbage collection.
+    # This metric comes from the PrometheusResource endpoint (/metrics/executors/prometheus/).
+    - alert: SparkExecutorHighGcTime
+      expr: 'metrics_executor_totalGCTime_seconds_total / metrics_executor_totalDuration > 0.1 and metrics_executor_totalDuration > 0'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Spark executor high GC time (instance {{ $labels.instance }})
+        description: "Spark executor {{ $labels.executor_id }} in {{ $labels.application_name }} is spending too much time in GC.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: SparkExecutorAllTasksFailing
+      expr: 'metrics_executor_failedTasks_total > 0 and metrics_executor_completedTasks_total == 0'
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: Spark executor all tasks failing (instance {{ $labels.instance }})
+        description: "Spark executor {{ $labels.executor_id }} has only failing tasks ({{ $value }} failed, 0 completed).\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: SparkExecutorHighTaskFailureRate
+      expr: 'metrics_executor_failedTasks_total / metrics_executor_totalTasks_total > 0.1 and metrics_executor_totalTasks_total > 0'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Spark executor high task failure rate (instance {{ $labels.instance }})
+        description: "Spark executor {{ $labels.executor_id }} has a task failure rate above 10%.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # diskUsed is a gauge, not a counter — do not use rate(). Threshold of 1GB is a rough default.
+    # Disk spilling indicates insufficient memory for the workload.
+    - alert: SparkExecutorHighDiskSpill
+      expr: 'metrics_executor_diskUsed_bytes > 1e9'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Spark executor high disk spill (instance {{ $labels.instance }})
+        description: "Spark executor {{ $labels.executor_id }} is spilling data to disk. Consider increasing executor memory.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

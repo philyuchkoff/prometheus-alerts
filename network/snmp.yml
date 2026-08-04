@@ -1,0 +1,80 @@
+# Инструмент: SNMP-экспортер: https://github.com/prometheus/snmp_exporter
+# Адаптировано из samber/awesome-prometheus-alerts (CC BY 4.0).
+# Источник: https://github.com/samber/awesome-prometheus-alerts
+
+groups:
+
+- name: SnmpExporter
+
+  # These rules use standard IF-MIB and SNMPv2-MIB metrics. Metric names depend on your snmp.yml module configuration.
+  # Thresholds for bandwidth and error rates are rough defaults - adjust to your environment.
+  rules:
+
+    # Rename job=~"snmp.*" to match the actual job name in your Prometheus scrape config.
+    - alert: SnmpTargetDown
+      expr: 'up{job=~"snmp.*"} == 0'
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: SNMP target down (instance {{ $labels.instance }})
+        description: "SNMP device {{ $labels.instance }} is unreachable.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: SnmpInterfaceDown
+      expr: '(ifOperStatus{job=~"snmp.*"} == 2) and on(instance, job, ifIndex) (ifAdminStatus{job=~"snmp.*"} == 1)'
+      for: 2m
+      labels:
+        severity: critical
+      annotations:
+        summary: SNMP interface down (instance {{ $labels.instance }})
+        description: "Interface {{ $labels.ifDescr }} on {{ $labels.instance }} is operationally down while administratively up.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # Threshold is a rough default. Adjust based on your network environment.
+    - alert: SnmpInterfaceHighInboundErrorRate
+      expr: 'rate(ifInErrors{job=~"snmp.*"}[5m]) / (rate(ifHCInUcastPkts{job=~"snmp.*"}[5m]) + rate(ifHCInBroadcastPkts{job=~"snmp.*"}[5m]) + rate(ifHCInMulticastPkts{job=~"snmp.*"}[5m])) > 0.05 and (rate(ifHCInUcastPkts{job=~"snmp.*"}[5m]) + rate(ifHCInBroadcastPkts{job=~"snmp.*"}[5m]) + rate(ifHCInMulticastPkts{job=~"snmp.*"}[5m])) > 0'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: SNMP interface high inbound error rate (instance {{ $labels.instance }})
+        description: "Interface {{ $labels.ifDescr }} on {{ $labels.instance }} has an inbound error rate above 5%.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # Threshold is a rough default. Adjust based on your network environment.
+    - alert: SnmpInterfaceHighOutboundErrorRate
+      expr: 'rate(ifOutErrors{job=~"snmp.*"}[5m]) / (rate(ifHCOutUcastPkts{job=~"snmp.*"}[5m]) + rate(ifHCOutBroadcastPkts{job=~"snmp.*"}[5m]) + rate(ifHCOutMulticastPkts{job=~"snmp.*"}[5m])) > 0.05 and (rate(ifHCOutUcastPkts{job=~"snmp.*"}[5m]) + rate(ifHCOutBroadcastPkts{job=~"snmp.*"}[5m]) + rate(ifHCOutMulticastPkts{job=~"snmp.*"}[5m])) > 0'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: SNMP interface high outbound error rate (instance {{ $labels.instance }})
+        description: "Interface {{ $labels.ifDescr }} on {{ $labels.instance }} has an outbound error rate above 5%.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # Threshold is a rough default. ifSpeed is a Gauge32 that maxes out at ~4.29 Gbps. For 10G+ interfaces, use ifHighSpeed (in Mbps) instead.
+    - alert: SnmpInterfaceHighBandwidthUsageInbound
+      expr: 'rate(ifHCInOctets{job=~"snmp.*"}[5m]) * 8 / ifSpeed > 0.80 and ifSpeed > 0'
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: SNMP interface high bandwidth usage inbound (instance {{ $labels.instance }})
+        description: "Interface {{ $labels.ifDescr }} on {{ $labels.instance }} inbound utilization is above 80%.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # Threshold is a rough default. ifSpeed is a Gauge32 that maxes out at ~4.29 Gbps. For 10G+ interfaces, use ifHighSpeed (in Mbps) instead.
+    - alert: SnmpInterfaceHighBandwidthUsageOutbound
+      expr: 'rate(ifHCOutOctets{job=~"snmp.*"}[5m]) * 8 / ifSpeed > 0.80 and ifSpeed > 0'
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: SNMP interface high bandwidth usage outbound (instance {{ $labels.instance }})
+        description: "Interface {{ $labels.ifDescr }} on {{ $labels.instance }} outbound utilization is above 80%.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # sysUpTime is in centiseconds (hundredths of a second).
+    - alert: SnmpDeviceRestarted
+      expr: 'sysUpTime / 100 < 300'
+      for: 0m
+      labels:
+        severity: info
+      annotations:
+        summary: SNMP device restarted (instance {{ $labels.instance }})
+        description: "SNMP device {{ $labels.instance }} has restarted (uptime < 5 minutes).\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

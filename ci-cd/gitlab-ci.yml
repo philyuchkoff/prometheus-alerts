@@ -1,0 +1,317 @@
+# Инструмент: GitLab (Gitaly / built-in / Workhorse): https://docs.gitlab.com/
+# Адаптировано из samber/awesome-prometheus-alerts (CC BY 4.0).
+# Источник: https://github.com/samber/awesome-prometheus-alerts
+
+groups:
+
+- name: Gitaly
+
+  rules:
+
+    # Filters to actual error codes. grpc_code!="OK" includes benign codes like NotFound, AlreadyExists, and Cancelled.
+    - alert: GitlabGitalyHighGrpcErrorRate
+      expr: 'sum(rate(grpc_server_handled_total{job="gitaly",grpc_code=~"Internal|Unavailable|DeadlineExceeded|ResourceExhausted|Aborted|Unknown|DataLoss"}[5m])) / sum(rate(grpc_server_handled_total{job="gitaly"}[5m])) * 100 > 5 and sum(rate(grpc_server_handled_total{job="gitaly"}[5m])) > 0'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: GitLab Gitaly high gRPC error rate (instance {{ $labels.instance }})
+        description: "Gitaly on {{ $labels.instance }} is returning more than 5% gRPC errors.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # ResourceExhausted errors from Gitaly mean Git operations are being rejected due to
+    # concurrency limits. This directly impacts users trying to push, pull, or clone.
+    - alert: GitlabGitalyResourceExhausted
+      expr: 'sum(rate(grpc_server_handled_total{job="gitaly",grpc_code="ResourceExhausted"}[5m])) / sum(rate(grpc_server_handled_total{job="gitaly"}[5m])) * 100 > 1 and sum(rate(grpc_server_handled_total{job="gitaly"}[5m])) > 0'
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: GitLab Gitaly resource exhausted (instance {{ $labels.instance }})
+        description: "Gitaly on {{ $labels.instance }} is returning ResourceExhausted errors, indicating overload ({{ $value }}%).\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: GitlabGitalyHighRpcLatency
+      expr: 'histogram_quantile(0.95, sum(rate(grpc_server_handling_seconds_bucket{job="gitaly",grpc_type="unary"}[5m])) by (le)) > 1'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: GitLab Gitaly high RPC latency (instance {{ $labels.instance }})
+        description: "Gitaly on {{ $labels.instance }} p95 unary RPC latency exceeds 1 second ({{ $value }}s).\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # Brief throttling spikes are normal. Threshold of 0.1s/s (10% of CPU time throttled) filters out transient noise.
+    - alert: GitlabGitalyCpuThrottled
+      expr: 'rate(gitaly_cgroup_cpu_cfs_throttled_seconds_total[5m]) > 0.1'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: GitLab Gitaly CPU throttled (instance {{ $labels.instance }})
+        description: "Gitaly processes on {{ $labels.instance }} are being CPU throttled by cgroups.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: GitlabGitalyAuthenticationFailures
+      expr: 'increase(gitaly_authentications_total{status="failed"}[5m]) > 3'
+      for: 0m
+      labels:
+        severity: warning
+      annotations:
+        summary: GitLab Gitaly authentication failures (instance {{ $labels.instance }})
+        description: "Gitaly on {{ $labels.instance }} has authentication failures ({{ $value }}).\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # When the circuit breaker trips to "open" state, Git operations (push, pull, clone) will fail.
+    # Check Gitaly service health and logs.
+    - alert: GitlabGitalyCircuitBreakerTripped
+      expr: 'increase(gitaly_circuit_breaker_transitions_total{to_state="open"}[5m]) > 0'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: GitLab Gitaly circuit breaker tripped (instance {{ $labels.instance }})
+        description: "Gitaly circuit breaker has tripped on {{ $labels.instance }}. Git operations are failing.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+- name: GitlabBuiltInExporter
+
+  rules:
+
+    # Queued connections indicate Puma workers are saturated.
+    # Consider increasing puma['worker_processes'] or puma['max_threads'] in gitlab.rb.
+    - alert: GitlabPumaHighQueuedConnections
+      expr: 'puma_queued_connections > 5'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: GitLab Puma high queued connections (instance {{ $labels.instance }})
+        description: "GitLab Puma has {{ $value }} queued connections on {{ $labels.instance }}. Requests are waiting for an available worker thread.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: GitlabPumaNoAvailablePoolCapacity
+      expr: 'puma_pool_capacity == 0'
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: GitLab Puma no available pool capacity (instance {{ $labels.instance }})
+        description: "GitLab Puma pool capacity on {{ $labels.instance }} has been at 0 for 5 minutes. All threads are busy.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: GitlabPumaWorkersNotRunning
+      expr: 'puma_running_workers < puma_workers'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: GitLab Puma workers not running (instance {{ $labels.instance }})
+        description: "GitLab Puma on {{ $labels.instance }} has {{ $value }} running workers out of expected total.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # Threshold is 5% of all requests returning server errors.
+    # Check GitLab logs at /var/log/gitlab/ for root cause.
+    - alert: GitlabHighHttpErrorRate
+      expr: 'sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) * 100 > 5 and sum(rate(http_requests_total[5m])) > 0'
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: GitLab high HTTP error rate (instance {{ $labels.instance }})
+        description: "GitLab is returning more than 5% HTTP 5xx errors on {{ $labels.instance }}.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # Threshold of 10s may need adjustment based on your instance size and workload.
+    - alert: GitlabHighHttpRequestLatency
+      expr: 'histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) > 10'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: GitLab high HTTP request latency (instance {{ $labels.instance }})
+        description: "GitLab p95 HTTP request latency on {{ $labels.instance }} is above 10 seconds.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # This metric requires the emit_sidekiq_histogram_metrics feature flag to be enabled.
+    # A sustained failure rate indicates background processing issues.
+    - alert: GitlabSidekiqJobsFailing
+      expr: 'rate(sidekiq_jobs_failed_total[5m]) > 0.1'
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: GitLab Sidekiq jobs failing (instance {{ $labels.instance }})
+        description: "GitLab Sidekiq jobs are failing at a rate of {{ $value }} per second on {{ $labels.instance }}.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # When running jobs approach the concurrency limit, new jobs will queue up.
+    # Consider scaling Sidekiq workers or increasing concurrency.
+    - alert: GitlabSidekiqQueueTooLarge
+      expr: 'sum(sidekiq_running_jobs) >= sum(sidekiq_concurrency) * 0.9'
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: GitLab Sidekiq queue too large (instance {{ $labels.instance }})
+        description: "GitLab Sidekiq has {{ $value }} running jobs, approaching concurrency limit on {{ $labels.instance }}.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # This metric requires the emit_sidekiq_histogram_metrics feature flag to be enabled.
+    - alert: GitlabSidekiqHighJobCompletionTime
+      expr: 'histogram_quantile(0.95, sum(rate(sidekiq_jobs_completion_seconds_bucket[5m])) by (le, worker)) > 300'
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: GitLab Sidekiq high job completion time (instance {{ $labels.instance }})
+        description: "GitLab Sidekiq job p95 completion time on {{ $labels.instance }} is above 5 minutes ({{ $value | humanizeDuration }}).\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # This metric requires the emit_sidekiq_histogram_metrics feature flag to be enabled.
+    # High queue latency means jobs are stuck waiting. Check Sidekiq concurrency and queue sizes.
+    - alert: GitlabSidekiqHighQueueLatency
+      expr: 'histogram_quantile(0.95, sum(rate(sidekiq_jobs_queue_duration_seconds_bucket[5m])) by (le)) > 60'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: GitLab Sidekiq high queue latency (instance {{ $labels.instance }})
+        description: "GitLab Sidekiq jobs on {{ $labels.instance }} are waiting more than 60 seconds before being processed.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # When the pool is near saturation, requests may block waiting for a connection.
+    # Increase db_pool_size in gitlab.rb or investigate slow queries.
+    - alert: GitlabDatabaseConnectionPoolSaturation
+      expr: 'gitlab_database_connection_pool_busy / gitlab_database_connection_pool_size * 100 > 90 and gitlab_database_connection_pool_size > 0'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: GitLab database connection pool saturation (instance {{ $labels.instance }})
+        description: "GitLab database connection pool on {{ $labels.instance }} ({{ $labels.class }}) is {{ $value }}% busy.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: GitlabDatabaseConnectionPoolDeadConnections
+      expr: 'gitlab_database_connection_pool_dead > 0'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: GitLab database connection pool dead connections (instance {{ $labels.instance }})
+        description: "GitLab database connection pool on {{ $labels.instance }} ({{ $labels.class }}) has {{ $value }} dead connections.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: GitlabDatabaseConnectionPoolWaiting
+      expr: 'gitlab_database_connection_pool_waiting > 0'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: GitLab database connection pool waiting (instance {{ $labels.instance }})
+        description: "GitLab on {{ $labels.instance }} has {{ $value }} threads waiting for a database connection.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: GitlabCiPipelineCreationSlow
+      expr: 'histogram_quantile(0.95, sum(rate(gitlab_ci_pipeline_creation_duration_seconds_bucket[5m])) by (le)) > 30'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: GitLab CI pipeline creation slow (instance {{ $labels.instance }})
+        description: "GitLab CI pipeline creation p95 latency on {{ $labels.instance }} is above 30 seconds.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # This metric may not exist in all GitLab versions. Verify against your GitLab installation.
+    - alert: GitlabCiPipelineFailuresIncreasing
+      expr: 'deriv(gitlab_ci_pipeline_failure_reasons[5m]) > 0.05'
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: GitLab CI pipeline failures increasing (instance {{ $labels.instance }})
+        description: "GitLab CI pipeline failures are increasing on {{ $labels.instance }} ({{ $value }}/s).\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # Frequent runner auth failures may indicate expired tokens or misconfigured runners.
+    - alert: GitlabCiRunnerAuthenticationFailures
+      expr: 'increase(gitlab_ci_runner_authentication_failure_total[5m]) > 5'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: GitLab CI runner authentication failures (instance {{ $labels.instance }})
+        description: "GitLab CI runners are experiencing authentication failures on {{ $labels.instance }} ({{ $value }} failures).\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # Threshold of 2GB may need adjustment based on your instance size.
+    # High memory usage can lead to OOM kills and service disruptions.
+    - alert: GitlabHighMemoryUsage
+      expr: 'process_resident_memory_bytes{job=~".*gitlab.*"} > 2e+9'
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: GitLab high memory usage (instance {{ $labels.instance }})
+        description: "GitLab process on {{ $labels.instance }} is using {{ $value | humanize1024 }}B of RSS memory.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # Heap fragmentation above 50% means a significant amount of memory is wasted.
+    # A Puma worker restart may help reclaim memory.
+    - alert: GitlabRubyHeapFragmentation
+      expr: 'ruby_gc_stat_ext_heap_fragmentation{job=~".*gitlab.*"} > 0.5'
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: GitLab Ruby heap fragmentation (instance {{ $labels.instance }})
+        description: "GitLab Ruby heap fragmentation on {{ $labels.instance }} is {{ $value }}. High fragmentation wastes memory.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: GitlabRackUncaughtErrors
+      expr: 'rate(rack_uncaught_errors_total[5m]) > 0.05'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: GitLab rack uncaught errors (instance {{ $labels.instance }})
+        description: "GitLab is experiencing uncaught errors in the Rack layer on {{ $labels.instance }} ({{ $value }}/s).\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # This may happen during a rolling deployment. If it persists, investigate incomplete upgrades.
+    - alert: GitlabVersionMismatch
+      expr: 'count(count by (version) (gitlab_build_info)) > 1'
+      for: 0m
+      labels:
+        severity: warning
+      annotations:
+        summary: GitLab version mismatch (instance {{ $labels.instance }})
+        description: "Multiple GitLab versions are running across the fleet.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: GitlabHighFileDescriptorUsage
+      expr: 'process_open_fds{job=~".*gitlab.*"} / process_max_fds * 100 > 80 and process_max_fds > 0'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: GitLab high file descriptor usage (instance {{ $labels.instance }})
+        description: "GitLab on {{ $labels.instance }} is using {{ $value }}% of available file descriptors.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: GitlabRubyThreadsSaturated
+      expr: 'sum by (instance) (gitlab_ruby_threads_running_threads) > on(instance) gitlab_ruby_threads_max_expected_threads * 1.5'
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: GitLab Ruby threads saturated (instance {{ $labels.instance }})
+        description: "GitLab running threads on {{ $labels.instance }} have exceeded the expected maximum ({{ $value }}).\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+- name: Workhorse
+
+  rules:
+
+    # Workhorse sits in front of Puma and handles Git HTTP, file uploads, and proxying.
+    # Threshold from GitLab Omnibus default rules: 10% for high-traffic instances.
+    - alert: GitlabWorkhorseHighErrorRate
+      expr: 'sum(rate(gitlab_workhorse_http_request_duration_seconds_count{code=~"5.."}[5m])) / sum(rate(gitlab_workhorse_http_request_duration_seconds_count[5m])) * 100 > 10 and sum(rate(gitlab_workhorse_http_request_duration_seconds_count[5m])) > 0'
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: GitLab Workhorse high error rate (instance {{ $labels.instance }})
+        description: "GitLab Workhorse on {{ $labels.instance }} is returning more than 10% HTTP 5xx errors.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: GitlabWorkhorseHighLatency
+      expr: 'histogram_quantile(0.95, sum(rate(gitlab_workhorse_http_request_duration_seconds_bucket[5m])) by (le)) > 10'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: GitLab Workhorse high latency (instance {{ $labels.instance }})
+        description: "GitLab Workhorse on {{ $labels.instance }} p95 request latency is above 10 seconds.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # Threshold of 100 may need adjustment based on instance size.
+    - alert: GitlabWorkhorseHighIn-flightRequests
+      expr: 'gitlab_workhorse_http_in_flight_requests > 100'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: GitLab Workhorse high in-flight requests (instance {{ $labels.instance }})
+        description: "GitLab Workhorse on {{ $labels.instance }} has {{ $value }} in-flight requests.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

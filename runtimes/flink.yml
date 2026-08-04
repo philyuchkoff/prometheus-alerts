@@ -1,0 +1,126 @@
+# Инструмент: Apache Flink (Prometheus reporter): https://flink.apache.org/
+# Адаптировано из samber/awesome-prometheus-alerts (CC BY 4.0).
+# Источник: https://github.com/samber/awesome-prometheus-alerts
+
+groups:
+
+- name: FlinkPrometheusReporter
+
+  rules:
+
+    - alert: FlinkJobIsNotRunning
+      expr: 'flink_jobmanager_numRunningJobs == 0'
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: Flink job is not running (instance {{ $labels.instance }})
+        description: "No Flink jobs are currently running. All jobs may have failed or been cancelled.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: FlinkNoTaskmanagersRegistered
+      expr: 'flink_jobmanager_numRegisteredTaskManagers == 0'
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: Flink no TaskManagers registered (instance {{ $labels.instance }})
+        description: "No TaskManagers are registered with the JobManager. The cluster has no processing capacity.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # This alert fires when there are no available task slots. Adjust the threshold if your cluster is expected to run at full capacity.
+    - alert: FlinkAllTaskSlotsUsed
+      expr: 'flink_jobmanager_taskSlotsAvailable == 0'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Flink all task slots used (instance {{ $labels.instance }})
+        description: "All Flink task slots are in use ({{ $value }} available). New jobs cannot be scheduled.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # A single restart may be normal during deployments. Adjust threshold based on restart tolerance.
+    - alert: FlinkJobRestartIncreasing
+      expr: 'delta(flink_jobmanager_job_numRestarts[5m]) > 1'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Flink job restart increasing (instance {{ $labels.instance }})
+        description: "Flink job {{ $labels.job_name }} has restarted {{ $value }} times in the last 5 minutes.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: FlinkCheckpointFailures
+      expr: 'delta(flink_jobmanager_job_numberOfFailedCheckpoints[10m]) > 1'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Flink checkpoint failures (instance {{ $labels.instance }})
+        description: "Flink job {{ $labels.job_name }} has {{ $value }} failed checkpoints in the last 10 minutes.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # Value is converted from milliseconds to seconds for correct humanizeDuration display.
+    # Threshold is 60 seconds. Adjust based on your checkpoint interval and state size.
+    - alert: FlinkCheckpointDurationHigh
+      expr: 'flink_jobmanager_job_lastCheckpointDuration / 1000 > 60'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Flink checkpoint duration high (instance {{ $labels.instance }})
+        description: "Flink job {{ $labels.job_name }} last checkpoint took {{ $value | humanizeDuration }} to complete.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: FlinkTaskBackpressured
+      expr: 'flink_taskmanager_job_task_isBackPressured == 1'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Flink task backpressured (instance {{ $labels.instance }})
+        description: "Flink task {{ $labels.task_name }} in job {{ $labels.job_name }} is backpressured.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # Fires when a task spends more than 500ms/sec backpressured. This indicates the task cannot keep up with upstream data rate.
+    - alert: FlinkTaskHighBackpressureTime
+      expr: 'flink_taskmanager_job_task_backPressuredTimeMsPerSecond > 500'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Flink task high backpressure time (instance {{ $labels.instance }})
+        description: "Flink task {{ $labels.task_name }} is spending {{ $value | humanize }}ms/sec in backpressure.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # Flink TaskManagers manage their own memory pool. High JVM heap usage (outside managed memory) may indicate memory leaks or misconfiguration.
+    - alert: FlinkTaskmanagerHeapMemoryHigh
+      expr: 'flink_taskmanager_Status_JVM_Memory_Heap_Used / flink_taskmanager_Status_JVM_Memory_Heap_Max > 0.9 and flink_taskmanager_Status_JVM_Memory_Heap_Max > 0'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Flink TaskManager heap memory high (instance {{ $labels.instance }})
+        description: "Flink TaskManager {{ $labels.instance }} heap memory usage is above 90%.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: FlinkJobmanagerHeapMemoryHigh
+      expr: 'flink_jobmanager_Status_JVM_Memory_Heap_Used / flink_jobmanager_Status_JVM_Memory_Heap_Max > 0.9 and flink_jobmanager_Status_JVM_Memory_Heap_Max > 0'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Flink JobManager heap memory high (instance {{ $labels.instance }})
+        description: "Flink JobManager {{ $labels.instance }} heap memory usage is above 90%.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # Flink exposes GC time as a gauge (cumulative milliseconds), so deriv() is used instead of rate().
+    # Threshold: more than 100ms/sec of GC time (10% of wall clock). Adjust based on your workload.
+    - alert: FlinkTaskmanagerGcTimeHigh
+      expr: 'deriv(flink_taskmanager_Status_JVM_GarbageCollector_All_Time[5m]) > 100'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Flink TaskManager GC time high (instance {{ $labels.instance }})
+        description: "Flink TaskManager {{ $labels.instance }} is spending more than 10% of time in garbage collection.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # Only fires for tasks that have previously received records, to avoid false positives during startup.
+    - alert: FlinkNoRecordsProcessed
+      expr: 'delta(flink_taskmanager_job_task_numRecordsIn[5m]) == 0 and flink_taskmanager_job_task_numRecordsIn > 0'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Flink no records processed (instance {{ $labels.instance }})
+        description: "Flink task {{ $labels.task_name }} has not processed any records in the last 5 minutes.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

@@ -1,0 +1,18 @@
+# Инструмент: Grafana Alloy (метрики встроены): https://grafana.com/docs/alloy/
+# Адаптировано из samber/awesome-prometheus-alerts (CC BY 4.0).
+# Источник: https://github.com/samber/awesome-prometheus-alerts
+
+groups:
+
+- name: EmbeddedExporter
+
+  rules:
+
+    - alert: GrafanaAlloyServiceDown
+      expr: 'count by (instance) (alloy_build_info offset 2h) unless count by (instance) (alloy_build_info)'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: Grafana Alloy service down (instance {{ $labels.instance }})
+        description: "Alloy on instance {{ $labels.instance }} is not responding or has stopped running.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

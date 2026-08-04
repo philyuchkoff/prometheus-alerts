@@ -1,6 +1,10 @@
+# Инструмент: Hashicorp Nomad (метрики встроены): https://www.nomadproject.io/
+# Адаптировано из samber/awesome-prometheus-alerts (CC BY 4.0).
+# Источник: https://github.com/samber/awesome-prometheus-alerts
+
 groups:
 
-- name: Nomad
+- name: EmbeddedExporter
 
   rules:
 
@@ -11,7 +15,7 @@ groups:
         severity: warning
       annotations:
         summary: Nomad job failed (instance {{ $labels.instance }})
-        description: "Nomad job failed\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+        description: "Nomad job {{ $labels.job }} has {{ $value }} failed allocations.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 
     - alert: NomadJobLost
       expr: 'nomad_nomad_job_summary_lost > 0'
@@ -20,7 +24,7 @@ groups:
         severity: warning
       annotations:
         summary: Nomad job lost (instance {{ $labels.instance }})
-        description: "Nomad job lost\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+        description: "Nomad job {{ $labels.job }} has {{ $value }} lost allocations.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 
     - alert: NomadJobQueued
       expr: 'nomad_nomad_job_summary_queued > 0'
@@ -29,7 +33,7 @@ groups:
         severity: warning
       annotations:
         summary: Nomad job queued (instance {{ $labels.instance }})
-        description: "Nomad job queued\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+        description: "Nomad job {{ $labels.job }} has {{ $value }} queued allocations.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 
     - alert: NomadBlockedEvaluation
       expr: 'nomad_nomad_blocked_evals_total_blocked > 0'
@@ -38,4 +42,4 @@ groups:
         severity: warning
       annotations:
         summary: Nomad blocked evaluation (instance {{ $labels.instance }})
-        description: "Nomad blocked evaluation\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+        description: "Nomad has {{ $value }} blocked evaluations. The cluster may lack resources to place allocations.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

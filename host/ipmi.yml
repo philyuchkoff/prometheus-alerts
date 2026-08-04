@@ -1,4 +1,6 @@
-# Инструмент: IPMI exporter: https://github.com/gebn/ipmi_exporter
+# Инструмент: IPMI Exporter: https://github.com/prometheus-community/ipmi_exporter
+# Адаптировано из samber/awesome-prometheus-alerts (CC BY 4.0).
+# Источник: https://github.com/samber/awesome-prometheus-alerts
 
 groups:
 
@@ -6,6 +8,168 @@ groups:
 
   rules:
 
+    # The ipmi_up metric is per-collector. A value of 0 means the collector could not retrieve data from the BMC.
+    - alert: IpmiCollectorDown
+      expr: 'ipmi_up == 0'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: IPMI collector down (instance {{ $labels.instance }})
+        description: "IPMI collector {{ $labels.collector }} on {{ $labels.instance }} failed to scrape sensor data. Check FreeIPMI tools and BMC connectivity.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # State values: 0=nominal, 1=warning, 2=critical. Thresholds are defined in the BMC firmware.
+    - alert: IpmiTemperatureSensorWarning
+      expr: 'ipmi_temperature_state == 1'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: IPMI temperature sensor warning (instance {{ $labels.instance }})
+        description: "IPMI temperature sensor {{ $labels.name }} on {{ $labels.instance }} is in warning state.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: IpmiTemperatureSensorCritical
+      expr: 'ipmi_temperature_state == 2'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: IPMI temperature sensor critical (instance {{ $labels.instance }})
+        description: "IPMI temperature sensor {{ $labels.name }} on {{ $labels.instance }} is in critical state. Immediate attention required to prevent hardware damage.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: IpmiFanSpeedSensorWarning
+      expr: 'ipmi_fan_speed_state == 1'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: IPMI fan speed sensor warning (instance {{ $labels.instance }})
+        description: "IPMI fan sensor {{ $labels.name }} on {{ $labels.instance }} is in warning state.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: IpmiFanSpeedSensorCritical
+      expr: 'ipmi_fan_speed_state == 2'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: IPMI fan speed sensor critical (instance {{ $labels.instance }})
+        description: "IPMI fan sensor {{ $labels.name }} on {{ $labels.instance }} is in critical state. A fan may have failed.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: IpmiFanSpeedZero
+      expr: 'ipmi_fan_speed_rpm == 0'
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: IPMI fan speed zero (instance {{ $labels.instance }})
+        description: "IPMI fan {{ $labels.name }} on {{ $labels.instance }} reports 0 RPM. The fan may have failed.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: IpmiVoltageSensorWarning
+      expr: 'ipmi_voltage_state == 1'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: IPMI voltage sensor warning (instance {{ $labels.instance }})
+        description: "IPMI voltage sensor {{ $labels.name }} on {{ $labels.instance }} is in warning state.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: IpmiVoltageSensorCritical
+      expr: 'ipmi_voltage_state == 2'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: IPMI voltage sensor critical (instance {{ $labels.instance }})
+        description: "IPMI voltage sensor {{ $labels.name }} on {{ $labels.instance }} is in critical state. Power supply or motherboard issue possible.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: IpmiCurrentSensorWarning
+      expr: 'ipmi_current_state == 1'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: IPMI current sensor warning (instance {{ $labels.instance }})
+        description: "IPMI current sensor {{ $labels.name }} on {{ $labels.instance }} is in warning state.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: IpmiCurrentSensorCritical
+      expr: 'ipmi_current_state == 2'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: IPMI current sensor critical (instance {{ $labels.instance }})
+        description: "IPMI current sensor {{ $labels.name }} on {{ $labels.instance }} is in critical state.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: IpmiPowerSensorWarning
+      expr: 'ipmi_power_state == 1'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: IPMI power sensor warning (instance {{ $labels.instance }})
+        description: "IPMI power sensor {{ $labels.name }} on {{ $labels.instance }} is in warning state.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: IpmiPowerSensorCritical
+      expr: 'ipmi_power_state == 2'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: IPMI power sensor critical (instance {{ $labels.instance }})
+        description: "IPMI power sensor {{ $labels.name }} on {{ $labels.instance }} is in critical state.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # Catches any sensor type not covered by the specific temperature/fan/voltage/current/power alerts.
+    - alert: IpmiGenericSensorCritical
+      expr: 'ipmi_sensor_state == 2'
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: IPMI generic sensor critical (instance {{ $labels.instance }})
+        description: "IPMI sensor {{ $labels.name }} (type={{ $labels.type }}) on {{ $labels.instance }} is in critical state.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: IpmiChassisPowerOff
+      expr: 'ipmi_chassis_power_state == 0'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: IPMI chassis power off (instance {{ $labels.instance }})
+        description: "IPMI reports chassis power is off on {{ $labels.instance }}. The server may have shut down unexpectedly.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # The metric uses inverted logic: 1=no fault, 0=fault detected.
+    - alert: IpmiChassisDriveFault
+      expr: 'ipmi_chassis_drive_fault_state == 0'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: IPMI chassis drive fault (instance {{ $labels.instance }})
+        description: "IPMI reports a drive fault on {{ $labels.instance }}. Check disk health.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # The metric uses inverted logic: 1=no fault, 0=fault detected.
+    - alert: IpmiChassisCoolingFault
+      expr: 'ipmi_chassis_cooling_fault_state == 0'
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: IPMI chassis cooling fault (instance {{ $labels.instance }})
+        description: "IPMI reports a cooling/fan fault on {{ $labels.instance }}. Check fans and airflow.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # SEL storage is typically very limited (e.g., 16KB). When full, new events may be dropped.
+    - alert: IpmiSelAlmostFull
+      expr: 'ipmi_sel_free_space_bytes < 512'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: IPMI SEL almost full (instance {{ $labels.instance }})
+        description: "IPMI System Event Log on {{ $labels.instance }} has only {{ printf \"%.0f\" $value }} bytes free. Clear the SEL to prevent loss of new events.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+- name: IpmiLocal
+
+  rules:
     - alert: IpmiDown
       expr: 'up{job="ipmi"} == 0'
       for: 0m
@@ -15,6 +179,7 @@ groups:
         summary: IPMI down (instance {{ $labels.instance }})
         description: "IPMI exporter target is down\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 
+
     - alert: IpmiTemperatureHigh
       expr: 'ipmi_sensor_value{name=~".*temperature.*"} > 75'
       for: 5m
@@ -23,6 +188,7 @@ groups:
       annotations:
         summary: IPMI temperature high (instance {{ $labels.instance }})
         description: "Sensor {{ $labels.name }} is above 75C\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
 
     - alert: IpmiFanFailure
       expr: 'ipmi_sensor_value{name=~".*fan.*"} == 0'

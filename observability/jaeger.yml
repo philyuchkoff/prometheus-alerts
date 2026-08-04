@@ -1,0 +1,177 @@
+# Инструмент: Jaeger (метрики встроены): https://www.jaegertracing.io/
+# Адаптировано из samber/awesome-prometheus-alerts (CC BY 4.0).
+# Источник: https://github.com/samber/awesome-prometheus-alerts
+
+groups:
+
+- name: EmbeddedExporterLegacy
+
+  # These rules target Jaeger v1.x metrics (jaeger_* prefix).
+  # Jaeger v1 reached end-of-life on December 31, 2025.
+  # For Jaeger v2+, use the "Embedded exporter (v2+)" rules instead.
+  # Note: jaeger-agent was deprecated in v1.35 and removed in v2.0.
+  rules:
+
+    - alert: JaegerAgentHttpServerErrors
+      expr: '100 * sum(rate(jaeger_agent_http_server_errors_total[1m])) by (instance, job, namespace) / sum(rate(jaeger_agent_http_server_total[1m])) by (instance, job, namespace) > 1 and sum(rate(jaeger_agent_http_server_total[1m])) by (instance, job, namespace) > 0'
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: Jaeger agent HTTP server errors (instance {{ $labels.instance }})
+        description: "Jaeger agent on {{ $labels.instance }} is experiencing {{ $value | humanize }}% HTTP server errors.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: JaegerClientRpcRequestErrors
+      expr: '100 * sum(rate(jaeger_client_jaeger_rpc_http_requests{status_code=~"4xx|5xx"}[1m])) by (instance, job, namespace) / sum(rate(jaeger_client_jaeger_rpc_http_requests[1m])) by (instance, job, namespace) > 1 and sum(rate(jaeger_client_jaeger_rpc_http_requests[1m])) by (instance, job, namespace) > 0'
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: Jaeger client RPC request errors (instance {{ $labels.instance }})
+        description: "Jaeger client on {{ $labels.instance }} is experiencing {{ $value | humanize }}% RPC HTTP errors.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: JaegerClientSpansDropped
+      expr: '100 * sum(rate(jaeger_reporter_spans{result=~"dropped|err"}[1m])) by (instance, job, namespace) / sum(rate(jaeger_reporter_spans[1m])) by (instance, job, namespace) > 1 and sum(rate(jaeger_reporter_spans[1m])) by (instance, job, namespace) > 0'
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: Jaeger client spans dropped (instance {{ $labels.instance }})
+        description: "Jaeger client on {{ $labels.instance }} is dropping {{ $value | humanize }}% of spans.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: JaegerAgentSpansDropped
+      expr: '100 * sum(rate(jaeger_agent_reporter_batches_failures_total[1m])) by (instance, job, namespace) / sum(rate(jaeger_agent_reporter_batches_submitted_total[1m])) by (instance, job, namespace) > 1 and sum(rate(jaeger_agent_reporter_batches_submitted_total[1m])) by (instance, job, namespace) > 0'
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: Jaeger agent spans dropped (instance {{ $labels.instance }})
+        description: "Jaeger agent on {{ $labels.instance }} is dropping {{ $value | humanize }}% of span batches.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: JaegerCollectorDroppingSpans
+      expr: '100 * sum(rate(jaeger_collector_spans_dropped_total[1m])) by (instance, job, namespace) / sum(rate(jaeger_collector_spans_received_total[1m])) by (instance, job, namespace) > 1 and sum(rate(jaeger_collector_spans_received_total[1m])) by (instance, job, namespace) > 0'
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: Jaeger collector dropping spans (instance {{ $labels.instance }})
+        description: "Jaeger collector on {{ $labels.instance }} is dropping {{ $value | humanize }}% of spans.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: JaegerSamplingUpdateFailing
+      expr: '100 * sum(rate(jaeger_sampler_queries{result="err"}[1m])) by (instance, job, namespace) / sum(rate(jaeger_sampler_queries[1m])) by (instance, job, namespace) > 1 and sum(rate(jaeger_sampler_queries[1m])) by (instance, job, namespace) > 0'
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: Jaeger sampling update failing (instance {{ $labels.instance }})
+        description: "Jaeger on {{ $labels.instance }} is failing {{ $value | humanize }}% of sampling policy updates.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: JaegerThrottlingUpdateFailing
+      expr: '100 * sum(rate(jaeger_throttler_updates{result="err"}[1m])) by (instance, job, namespace) / sum(rate(jaeger_throttler_updates[1m])) by (instance, job, namespace) > 1 and sum(rate(jaeger_throttler_updates[1m])) by (instance, job, namespace) > 0'
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: Jaeger throttling update failing (instance {{ $labels.instance }})
+        description: "Jaeger on {{ $labels.instance }} is failing {{ $value | humanize }}% of throttling policy updates.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    - alert: JaegerQueryRequestFailures
+      expr: '100 * sum(rate(jaeger_query_requests_total{result="err"}[1m])) by (instance, job, namespace) / sum(rate(jaeger_query_requests_total[1m])) by (instance, job, namespace) > 1 and sum(rate(jaeger_query_requests_total[1m])) by (instance, job, namespace) > 0'
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: Jaeger query request failures (instance {{ $labels.instance }})
+        description: "Jaeger query on {{ $labels.instance }} is failing {{ $value | humanize }}% of requests.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+- name: EmbeddedExporter
+
+  # Jaeger v2 is built on OpenTelemetry Collector and exposes metrics on port 8888 (/metrics).
+  # It emits standard otelcol_* pipeline metrics alongside Jaeger-specific storage and query metrics.
+  # For span ingestion pipeline alerts (refused spans, export failures, queue saturation),
+  # use the OpenTelemetry Collector rules instead.
+  rules:
+
+    - alert: JaegerHighStorageErrorRate
+      expr: '100 * sum(rate(jaeger_storage_requests_total{result="err"}[1m])) by (instance, job, namespace, operation) / sum(rate(jaeger_storage_requests_total[1m])) by (instance, job, namespace, operation) > 1 and sum(rate(jaeger_storage_requests_total[1m])) by (instance, job, namespace, operation) > 0'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Jaeger high storage error rate (instance {{ $labels.instance }})
+        description: "Jaeger on {{ $labels.instance }} is experiencing {{ $value | humanize }}% storage errors on {{ $labels.operation }}.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # Threshold of 1s is a rough default. Adjust based on your storage backend and data volume.
+    - alert: JaegerSlowStorageOperations
+      expr: 'histogram_quantile(0.99, sum(rate(jaeger_storage_latency_seconds_bucket[5m])) by (le, instance, job, namespace, operation)) > 1'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Jaeger slow storage operations (instance {{ $labels.instance }})
+        description: "Jaeger on {{ $labels.instance }} storage p99 latency for {{ $labels.operation }} is {{ $value | humanizeDuration }}.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # Filters on http_route="/api/traces" (the trace search endpoint). The http_server_request_duration_seconds
+    # metric is emitted by the otelhttp middleware used by the Jaeger query service.
+    - alert: JaegerQueryServiceHighErrorRate
+      expr: '100 * sum(rate(http_server_request_duration_seconds_count{http_route="/api/traces",http_response_status_code=~"5.."}[1m])) by (instance, job, namespace) / sum(rate(http_server_request_duration_seconds_count{http_route="/api/traces"}[1m])) by (instance, job, namespace) > 1 and sum(rate(http_server_request_duration_seconds_count{http_route="/api/traces"}[1m])) by (instance, job, namespace) > 0'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Jaeger query service high error rate (instance {{ $labels.instance }})
+        description: "Jaeger query service on {{ $labels.instance }} is returning {{ $value | humanize }}% HTTP 5xx errors.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # Threshold of 2s is a rough default. Adjust based on your storage backend and data volume.
+    - alert: JaegerQueryServiceSlowResponses
+      expr: 'histogram_quantile(0.99, sum(rate(http_server_request_duration_seconds_bucket{http_route="/api/traces"}[5m])) by (le, instance, job, namespace)) > 2'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Jaeger query service slow responses (instance {{ $labels.instance }})
+        description: "Jaeger query service on {{ $labels.instance }} p99 response latency is {{ $value | humanizeDuration }}.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # Fires when all storage operations for a given type are failing and none are succeeding.
+    # Indicates the storage backend (Cassandra, Elasticsearch, etc.) is likely unreachable or misconfigured.
+    - alert: JaegerStorageCompletelyUnavailable
+      expr: 'sum(rate(jaeger_storage_requests_total{result="err"}[1m])) by (instance, job, namespace, operation) > 0 and sum(rate(jaeger_storage_requests_total{result="ok"}[1m])) by (instance, job, namespace, operation) == 0'
+      for: 2m
+      labels:
+        severity: critical
+      annotations:
+        summary: Jaeger storage completely unavailable (instance {{ $labels.instance }})
+        description: "Jaeger on {{ $labels.instance }} has 100% storage errors for {{ $labels.operation }} — storage backend may be down.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # Single trace retrieval (/api/traces/{traceID}) can be slower than search, especially for large traces.
+    # Threshold of 5s is a rough default.
+    - alert: JaegerSlowSingleTraceRetrieval
+      expr: 'histogram_quantile(0.99, sum(rate(http_server_request_duration_seconds_bucket{http_route="/api/traces/{traceID}"}[5m])) by (le, instance, job, namespace)) > 5'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Jaeger slow single trace retrieval (instance {{ $labels.instance }})
+        description: "Jaeger on {{ $labels.instance }} p99 latency for single trace retrieval is {{ $value | humanizeDuration }}.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # Errors on /api/services indicate the storage backend cannot return the list of instrumented services,
+    # which breaks the Jaeger UI service selector.
+    - alert: JaegerServiceDiscoveryErrors
+      expr: '100 * sum(rate(http_server_request_duration_seconds_count{http_route="/api/services",http_response_status_code=~"5.."}[1m])) by (instance, job, namespace) / sum(rate(http_server_request_duration_seconds_count{http_route="/api/services"}[1m])) by (instance, job, namespace) > 1 and sum(rate(http_server_request_duration_seconds_count{http_route="/api/services"}[1m])) by (instance, job, namespace) > 0'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Jaeger service discovery errors (instance {{ $labels.instance }})
+        description: "Jaeger on {{ $labels.instance }} is returning {{ $value | humanize }}% HTTP 5xx errors on the services endpoint.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+    # Fires when an operation (e.g. find_traces, get_services) has received requests but none succeeded.
+    # May indicate a persistent storage error or a backend that is slow to recover.
+    - alert: JaegerNoStorageReadsSucceeding
+      expr: 'sum(increase(jaeger_storage_requests_total{result="ok"}[15m])) by (instance, job, namespace, operation) == 0 and sum(increase(jaeger_storage_requests_total[15m])) by (instance, job, namespace, operation) > 0'
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Jaeger no storage reads succeeding (instance {{ $labels.instance }})
+        description: "Jaeger on {{ $labels.instance }} has no successful storage reads for {{ $labels.operation }} in the past 15 minutes.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

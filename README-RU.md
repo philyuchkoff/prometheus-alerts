@@ -16,6 +16,9 @@
 - [Mimir](observability/mimir.yml)
 - [VictoriaMetrics](observability/victoriametrics.yml)
 - [Thanos](observability/thanos.yml)
+- [Cortex](observability/cortex.yml)
+- [Jaeger](observability/jaeger.yml)
+- [Grafana Alloy](observability/grafana-alloy.yml)
 
 ### Logging
 - [Loki](logging/loki.yml)
@@ -43,6 +46,11 @@
 - [MSSQL](databases/mssql.yml)
 - [Memcached](databases/memcached.yml)
 - [InfluxDB](databases/influxdb.yml)
+- [OpenSearch](databases/opensearch.yml)
+- [Solr](databases/solr.yml)
+- [Meilisearch](databases/meilisearch.yml)
+- [CouchDB](databases/couchdb.yml)
+- [Oracle](databases/oracle.yml)
 
 ### Brokers
 
@@ -50,17 +58,26 @@
 - [Zookeeper](brokers/zookeeper.yml)
 - [Kafka](brokers/kafka.yml)
 - [Elasticsearch](brokers/elasticsearch.yml)
+- [NATS](brokers/nats.yml)
 
 ### Proxies and load balancers
 
 - [Nginx](proxy/nginx.yml)
 - [HAProxy v.2](proxy/haproxy.yml)
 - [Traefik](proxy/traefik.yml)
+- [Apache](proxy/apache.yml)
+- [Caddy](proxy/caddy.yml)
+- [Envoy](proxy/envoy.yml)
 
 ### Runtimes
 - [PHP-FPM](runtimes/php-fpm.yml)
 - [JVM](runtimes/jvm.yml)
 - [Sidekiq](runtimes/sidekiq.yml)
+
+### Data engineering
+- [Apache Flink](runtimes/flink.yml)
+- [Apache Spark](runtimes/spark.yml)
+- [Apache Hadoop](runtimes/hadoop.yml)
 
 ### Orchestrators
 - [Kubernetes](orchestrators/k8s.yml)
@@ -72,9 +89,13 @@
 - [Istio](orchestrators/istio.yml)
 - [ArgoCD](orchestrators/argocd.yml)
 - [Harbor](orchestrators/harbor.yml)
+- [FluxCD](orchestrators/fluxcd.yml)
+- [OpenStack](orchestrators/openstack.yml)
+- [OpenEBS](orchestrators/openebs.yml)
 
 ### CI/CD
 - [Jenkins](ci-cd/jenkins.yml)
+- [GitLab CI](ci-cd/gitlab-ci.yml)
 - [GitLab Runner](ci-cd/gitlab-runner.yml)
 - [GitHub Runner](ci-cd/github-runner.yml)
 
@@ -88,8 +109,19 @@
 - [Proxmox](virtualization/proxmox.yml)
 - [KVM/libvirt](virtualization/kvm.yml)
 
-### Network and storage
+### Network and security
 - [CoreDNS](network/coredns.yml)
+- [cert-manager](network/cert-manager.yml)
+- [Cilium](network/cilium.yml)
+- [WireGuard](network/wireguard.yml)
+- [Hashicorp Vault](network/hashicorp-vault.yml)
+- [Cloudflare](network/cloudflare.yml)
+- [SNMP](network/snmp.yml)
+- [Juniper](network/juniper.yml)
+- [SpeedTest](network/speedtest.yml)
+- [SSL/TLS](network/ssltls.yml)
+
+### Storage
 - [Ceph](storage/ceph.yml)
 - [MinIO](storage/minio.yml)
 - [Longhorn](storage/longhorn.yml)
@@ -97,7 +129,6 @@
 
 ### Security
 - [Keycloak](security/keycloak.yml)
-- [SSL/TLS](network/ssltls.yml)
 
 ## Как подключить
 
@@ -133,4 +164,49 @@ promtool test rules tests/mysql-test.yml
 promtool test rules tests/podman-test.yml
 ```
 
-Чтобы добиться зелёного CI для нового файла правил, добавьте соответствующий `tests/<name>-test.yml`. 
+Чтобы добиться зелёного CI для нового файла правил, добавьте соответствующий `tests/<name>-test.yml`.
+
+## Авторство
+
+Часть правил адаптирована из [samber/awesome-prometheus-alerts](https://github.com/samber/awesome-prometheus-alerts) (CC BY 4.0):
+
+- [cert-manager](network/cert-manager.yml)
+- [Cilium](network/cilium.yml)
+- [WireGuard](network/wireguard.yml)
+- [Hashicorp Vault](network/hashicorp-vault.yml)
+- [Cloudflare](network/cloudflare.yml)
+- [SNMP](network/snmp.yml)
+- [Juniper](network/juniper.yml)
+- [SpeedTest](network/speedtest.yml)
+- [NATS](brokers/nats.yml)
+- [OpenSearch](databases/opensearch.yml)
+- [Solr](databases/solr.yml)
+- [Meilisearch](databases/meilisearch.yml)
+- [CouchDB](databases/couchdb.yml)
+- [Oracle](databases/oracle.yml)
+- [Apache](proxy/apache.yml)
+- [Caddy](proxy/caddy.yml)
+- [Envoy](proxy/envoy.yml)
+- [Apache Flink](runtimes/flink.yml)
+- [Apache Spark](runtimes/spark.yml)
+- [Apache Hadoop](runtimes/hadoop.yml)
+- [Cortex](observability/cortex.yml)
+- [Jaeger](observability/jaeger.yml)
+- [Grafana Alloy](observability/grafana-alloy.yml)
+- [FluxCD](orchestrators/fluxcd.yml)
+- [OpenStack](orchestrators/openstack.yml)
+- [OpenEBS](orchestrators/openebs.yml)
+- [Nomad exporter](orchestrators/nomad.yml)
+- [GitLab CI](ci-cd/gitlab-ci.yml)
+- [Mimir](observability/mimir.yml)
+- [Thanos](observability/thanos.yml)
+- [HAProxy](proxy/haproxy.yml)
+- [Cassandra](databases/cassandra.yml)
+- [ClickHouse](databases/clickhouse.yml)
+- [IPMI](host/ipmi.yml)
+
+В каждом из этих файлов также есть заголовок с указанием исходного источника.
+
+## Лицензия
+
+Распространяется под [Creative Commons Attribution 4.0 International](LICENSE) (CC BY 4.0). 
