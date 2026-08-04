@@ -1,6 +1,5 @@
 > **788+ production-ready Prometheus alerting rules for 80+ services — just copy-paste YAML**
 
-- [Prometheus documentation](https://prometheus.io/docs/introduction/overview/)
 - [Русская версия](README-RU.md)
 
 Ready-to-use Prometheus alert rules for various components. All `.yml` files are valid rules to include via `rule_files`.

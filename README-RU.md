@@ -1,6 +1,5 @@
 > **788+ production-ready правил алертинга Prometheus для 80+ сервисов — просто copy-paste YAML**
 
-- [Prometheus documentation](https://prometheus.io/docs/introduction/overview/)
 - [English version](README.md)
 
 Готовые наборы правил Prometheus для разных компонентов. Все файлы `.yml` — валидные правила для подключения через `rule_files`.
